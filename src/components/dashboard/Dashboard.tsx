@@ -79,11 +79,12 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
               label: "Perks 🎁",
               shortLabel: "Perks 🎁",
               star: true,
+              // Tabs styles this pill (filled vs outlined) by selection.
               badge: (
-                <span className="rounded-full bg-white/25 px-2 py-0.5 text-xs font-bold">
+                <>
                   {e.perks.length}
                   <span className="hidden sm:inline"> perks</span>
-                </span>
+                </>
               ),
             },
             { id: "family", label: "Planning a family? 👶", shortLabel: "Family 👶" },

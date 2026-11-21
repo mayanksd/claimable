@@ -49,25 +49,38 @@ export function Tabs({ tabs, active, onChange }: { tabs: TabDef[]; active: strin
             }}
             className={cn(
               "relative flex min-h-12 min-w-0 shrink-0 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-full px-3 text-[15px] font-bold whitespace-nowrap transition-all duration-200 sm:justify-start sm:gap-2 sm:px-5 sm:text-base",
-              t.star
-                ? "bg-gradient-to-r from-brand via-brand-2 to-warm text-white shadow-lg shadow-warm/30"
-                : selected
-                  ? "border border-brand bg-brand text-white shadow-md shadow-brand/25"
-                  : "border border-border bg-white text-foreground hover:border-brand-line hover:bg-brand-soft",
-              t.star && selected && "ring-2 ring-brand/30 ring-offset-2 ring-offset-background",
-              t.star && !selected && "opacity-90 hover:opacity-100",
+              // Only the selected tab is ever filled.
+              t.star && selected && "bg-gradient-to-r from-brand via-brand-2 to-warm text-white shadow-lg shadow-warm/30 ring-2 ring-brand/30 ring-offset-2 ring-offset-background",
+              t.star && !selected && "star-outline hover:shadow-sm",
+              !t.star && selected && "border border-brand bg-brand text-white shadow-md shadow-brand/25",
+              !t.star && !selected && "border border-border bg-white text-foreground hover:border-brand-line hover:bg-brand-soft",
             )}
           >
             {t.shortLabel ? (
               <>
-                <span className="sm:hidden">{t.shortLabel}</span>
-                <span className="hidden sm:inline">{t.label}</span>
+                <span className="sm:hidden">
+                  <Label text={t.shortLabel} gradient={!!t.star && !selected} />
+                </span>
+                <span className="hidden sm:inline">
+                  <Label text={t.label} gradient={!!t.star && !selected} />
+                </span>
               </>
             ) : (
-              t.label
+              <Label text={t.label} gradient={!!t.star && !selected} />
             )}
-            {t.badge}
-            {t.star && !reduce && (
+            {t.star ? (
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-xs font-bold",
+                  selected ? "bg-white/25 text-white" : "bg-brand-soft text-brand",
+                )}
+              >
+                {t.badge}
+              </span>
+            ) : (
+              t.badge
+            )}
+            {t.star && selected && !reduce && (
               // One shine sweep on first view.
               <motion.span
                 aria-hidden
@@ -81,5 +94,19 @@ export function Tabs({ tabs, active, onChange }: { tabs: TabDef[]; active: strin
         );
       })}
     </div>
+  );
+}
+
+/** Tab text; for the unselected star tab the words get gradient ink, the emoji keeps its colours. */
+function Label({ text, gradient }: { text: string; gradient: boolean }) {
+  if (!gradient) return <>{text}</>;
+  const m = text.match(/^(.*?)(\s*\p{Extended_Pictographic}.*)?$/u);
+  const words = m?.[1] ?? text;
+  const emoji = m?.[2] ?? "";
+  return (
+    <>
+      <span className="bg-gradient-to-r from-brand via-brand-2 to-warm bg-clip-text text-transparent">{words}</span>
+      {emoji}
+    </>
   );
 }

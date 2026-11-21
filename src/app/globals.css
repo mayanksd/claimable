@@ -134,3 +134,11 @@
     opacity: 0.6;
   }
 }
+
+/* Unselected star tab: white pill with a thin gradient border (no fill, no glow). */
+.star-outline {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(90deg, var(--brand), var(--brand-2), var(--warm)) border-box;
+}
