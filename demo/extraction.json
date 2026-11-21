@@ -310,7 +310,7 @@
         "id": "ped",
         "emoji": "⏳",
         "title": "Conditions you had before buying (e.g. diabetes, BP)",
-        "detail": "Hospital cover for them starts after a 36-month wait.",
+        "detail": "Pre-existing — covered after 36 months. Check your start date with your insurer.",
         "status": "waiting",
         "coveredFrom": "1 Jan 2029",
         "sourcePage": 4

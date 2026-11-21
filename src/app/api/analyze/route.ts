@@ -2,7 +2,8 @@ import { generateText, type ModelMessage } from "ai";
 import type { z } from "zod";
 import { model } from "@/lib/ai";
 import { redact } from "@/lib/redact";
-import { PartASchema, PartBSchema, mergeParts, type PartA } from "@/lib/modelSchema";
+import { PartASchema, PartBSchema, mergeParts, type PartA, type PartB } from "@/lib/modelSchema";
+import { fixPreExisting } from "@/lib/preExisting";
 import { parseWith } from "@/lib/parseExtraction";
 import { buildPartSystem } from "@/lib/extractionPrompt";
 import type { Extraction } from "@/lib/schema";
@@ -131,7 +132,7 @@ export async function POST(req: Request) {
         yield { type: "error", message: notHealth };
         return;
       }
-      yield { type: "done", result: resultFor(mergeParts(a, early.value)) };
+      yield { type: "done", result: resultFor(mergeParts(a, withPedRule(early.value, redacted.text))) };
       return;
     }
     if (early && !early.ok) {
@@ -153,8 +154,20 @@ export async function POST(req: Request) {
       yield { type: "update", notHealth };
       return;
     }
-    yield { type: "update", extraction: resultFor(mergeParts(a, b.value)).extraction };
+    yield { type: "update", extraction: resultFor(mergeParts(a, withPedRule(b.value, redacted.text))).extraction };
   });
+}
+
+/**
+ * Accuracy rule on part B: a pre-existing condition is a waiting period (never "not covered"),
+ * and nothing is "permanently excluded" unless the policy text says so for that item.
+ */
+function withPedRule(b: PartB, policyText: string): PartB {
+  return {
+    ...b,
+    family: { ...b.family, items: fixPreExisting(b.family.items, policyText) },
+    lifestyle: { ...b.lifestyle, items: fixPreExisting(b.lifestyle.items, policyText) },
+  };
 }
 
 /** Wall-clock per stage, logged as one JSON line so Vercel logs are easy to read. */
