@@ -114,6 +114,7 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
                 claimed={claimed}
                 onToggleClaimed={toggle}
                 checkupResetNote={resetNote}
+                sumInsuredInr={e.policy.sumInsuredInr}
               />
               <ClaimedProgress claimed={claimedTotal(e, claimed)} total={e.heroValue.annualPerksValueInr} />
               <OptionalCovers covers={e.optionalCovers} />

@@ -24,9 +24,10 @@ type Props = {
   claimed: Set<string>;
   onToggleClaimed: (id: string) => void;
   checkupResetNote: string | null;
+  sumInsuredInr?: number;
 };
 
-export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupResetNote }: Props) {
+export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupResetNote, sumInsuredInr = 0 }: Props) {
   const [open, setOpen] = useState(false);
   const [planFor, setPlanFor] = useState<string | null>(null);
 
@@ -45,6 +46,7 @@ export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupR
         claimed={claimed.has(p.id)}
         onToggleClaimed={() => onToggleClaimed(p.id)}
         resetNote={checkupResetNote}
+        sumInsuredInr={sumInsuredInr}
         onMaxCheckup={isCheckupPerk(p) ? () => setPlanFor((id) => (id === p.id ? null : p.id)) : undefined}
       />
     </motion.div>
@@ -53,7 +55,7 @@ export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupR
     const p = items.find((x) => x.id === planFor);
     return p?.capInr ? <CheckupPlanner limitInr={p.capInr} policyText={policyText} onClose={() => setPlanFor(null)} /> : null;
   };
-  const top = topPerks(perks);
+  const top = topPerks(perks, 3, sumInsuredInr);
   const rest = perks.filter((p) => !top.includes(p));
   if (!perks.length) return null;
 

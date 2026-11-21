@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Extraction } from "@/lib/schema";
-import { effortTag } from "@/lib/perks";
+import { effortTag, perkAmount, perkDescription } from "@/lib/perks";
 import { inr } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { askChat, claimQuestion } from "@/lib/client/askChat";
@@ -11,13 +11,6 @@ import { BASE_PACKAGE } from "@/data/test-prices";
 
 type Perk = Extraction["perks"][number];
 
-const FREQ: Record<Perk["frequency"], string> = {
-  per_year: "/ year",
-  per_policy_term: "/ policy term",
-  per_event: "/ event",
-  one_time: "once",
-  unlimited: "",
-};
 
 type Props = {
   perk: Perk;
@@ -29,12 +22,13 @@ type Props = {
   onMaxCheckup?: () => void;
   maxOpen?: boolean;
   resetNote?: string | null;
+  /** Lets "up to sum insured" limits show as words, not a giant number. */
+  sumInsuredInr?: number;
 };
 
-export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxCheckup, maxOpen, resetNote }: Props) {
+export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxCheckup, maxOpen, resetNote, sumInsuredInr = 0 }: Props) {
   const tag = optional ? null : effortTag(perk);
-  // Show "/ year" etc. only next to a plain rupee cap, as in the mock.
-  const freq = perk.capInr !== null && /^₹[\d,]+$/.test(perk.capLabel) ? FREQ[perk.frequency] : "";
+  const { prefix, amount, freq } = perkAmount(perk, sumInsuredInr);
   const isCheckup = !!onMaxCheckup && !!perk.capInr;
 
   return (
@@ -45,7 +39,7 @@ export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxChecku
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="grid size-12 place-items-center rounded-full bg-warm-soft text-[26px] leading-none" aria-hidden>
+        <div className="grid size-14 place-items-center rounded-full bg-warm-soft text-[44px] leading-none sm:size-16 sm:text-[56px]" aria-hidden>
           {perk.emoji}
         </div>
         <span className="pt-1 text-xs text-muted-foreground">Pg {perk.sourcePage}</span>
@@ -56,10 +50,20 @@ export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxChecku
         </Badge>
       )}
       <h3 className="mt-3 mb-1 text-base font-bold text-balance">{perk.name}</h3>
-      <div className="text-xl font-extrabold">
-        {perk.capLabel} {freq && <small className="text-xs font-medium text-muted-foreground">{freq}</small>}
+      {prefix && <div className="text-xs font-semibold text-muted-foreground">{prefix}</div>}
+      <div className="flex items-baseline gap-1.5">
+        <span
+          className={cn(
+            "font-display leading-tight font-extrabold tabular-nums",
+            // Big for numbers and short labels ("Unlimited", "Up to 20%"); wordy limits stay readable.
+            amount.startsWith("₹") || amount.length <= 12 ? "text-[28px]" : "text-xl",
+          )}
+        >
+          {amount}
+        </span>
+        {freq && <span className="text-sm font-medium text-muted-foreground">{freq}</span>}
       </div>
-      <p className="mt-1.5 text-sm text-muted-foreground">{perk.oneLiner}</p>
+      <p className="mt-1.5 text-sm text-muted-foreground">{perkDescription(perk)}</p>
       {isCheckup && (
         <p className="mt-2.5 rounded-lg bg-good-soft px-2.5 py-2 text-sm text-good-ink">
           A basic full-body check-up costs about {inr(BASE_PACKAGE.priceInr)}. You have {inr(perk.capInr!)} — use all of it.

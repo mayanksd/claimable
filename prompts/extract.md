@@ -31,4 +31,4 @@ Fill the JSON schema exactly. Rules:
     - State exclusions plainly (e.g. maternity `not_covered`). Put checklist topics the policy never mentions in `notMentioned`.
 13. `checkupFrequency`: how often the free health check-up can be used, e.g. "Once every policy year" (`everyYear` true) or "Every 3 claim-free years" (`everyYear` false). If there's no check-up: `label` empty string, `everyYear` false, `sourcePage` 0.
 14. `ambiguities`: wording a normal person could read two ways, with one short question to ask the insurer.
-15. Plain English, Indian rupees, no jargon, upbeat where honest. One-liners max 15 words. Never give medical or buying advice.
+15. Plain English, Indian rupees, no jargon, upbeat where honest. One-liners max 15 words: say what the perk covers and how to use it, without repeating the ₹ amount (it is shown separately). Never give medical or buying advice.

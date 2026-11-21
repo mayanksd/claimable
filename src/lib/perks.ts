@@ -10,22 +10,37 @@ export const isEasy = (p: Perk) => EASY.has(p.claimMode);
 export const effortTag = (p: Perk): "Easy" | "Needs a claim" | null =>
   isEasy(p) ? "Easy" : p.claimMode === "reimbursement" ? "Needs a claim" : null;
 
-/** Unlimited or free-to-use perks with no ₹ cap (teleconsults, in-app discounts). */
-const isUnlimitedOrFree = (p: Perk) => p.capInr === null && (p.frequency === "unlimited" || isEasy(p));
+/**
+ * "Up to sum insured" items (vaccination cover, in-patient benefits…) are hospital cover, not an
+ * everyday perk: never in the top 3 or the hero total.
+ */
+export const isSumInsuredLimited = (p: Perk, sumInsuredInr = 0) =>
+  /sum\s*insured|\bS\.?I\.?\b/i.test(p.capLabel) || (sumInsuredInr > 0 && (p.capInr ?? 0) >= sumInsuredInr);
+
+/** A real everyday ₹ cap (e.g. ₹10,000), not "up to sum insured". */
+const hasMoneyCap = (p: Perk, sumInsuredInr: number) =>
+  typeof p.capInr === "number" && p.capInr > 0 && !isSumInsuredLimited(p, sumInsuredInr);
+
+/** Unlimited or free everyday services with no ₹ cap (teleconsults, in-app discounts). */
+const isUnlimitedOrFree = (p: Perk, sumInsuredInr: number) =>
+  p.capInr === null &&
+  !isSumInsuredLimited(p, sumInsuredInr) &&
+  (p.frequency === "unlimited" || p.claimMode === "free" || p.claimMode === "in_app");
 
 /**
  * "Use these this week" (usable-any-time perks only):
  * the biggest ₹ perks first (Easy before Needs a claim on a tie), with the last slot kept for the best
  * unlimited / free perk so there's always one thing to use today. If there is none, ₹ perks fill it.
  */
-export function topPerks(perks: Perk[], n = 3): Perk[] {
+export function topPerks(perks: Perk[], n = 3, sumInsuredInr = 0): Perk[] {
   const pool = perks.map((p, i) => ({ p, i })).filter(({ p }) => p.category === "use_now");
+  // Only explicit ₹ caps or unlimited/free everyday services qualify; "up to sum insured" never does.
   const money = pool
-    .filter(({ p }) => p.capInr !== null)
+    .filter(({ p }) => hasMoneyCap(p, sumInsuredInr))
     .sort((a, b) => b.p.capInr! - a.p.capInr! || Number(isEasy(b.p)) - Number(isEasy(a.p)) || a.i - b.i)
     .map(({ p }) => p);
   const unlimited = pool
-    .filter(({ p }) => isUnlimitedOrFree(p))
+    .filter(({ p }) => isUnlimitedOrFree(p, sumInsuredInr))
     .sort((a, b) => Number(isEasy(b.p)) - Number(isEasy(a.p)) || a.i - b.i)
     .map(({ p }) => p);
 
@@ -48,7 +63,7 @@ export const isCheckupPerk = (p: Perk) => HEALTH_CHECKUP_RE.test(p.name) && (p.c
  */
 export function computeHeroValue(e: Pick<Extraction, "perks" | "policy">): Extraction["heroValue"] {
   const included = e.perks.filter(
-    (p) => p.category === "use_now" && p.frequency === "per_year" && typeof p.capInr === "number" && p.capInr > 0,
+    (p) => p.category === "use_now" && p.frequency === "per_year" && hasMoneyCap(p, e.policy.sumInsuredInr),
   );
   const total = included.reduce((s, p) => s + (p.capInr ?? 0), 0);
   const premium = e.policy.annualPremiumInr;
@@ -63,3 +78,42 @@ export const withComputedHero = <E extends Pick<Extraction, "perks" | "policy" |
   ...e,
   heroValue: computeHeroValue(e),
 });
+
+const FREQ_LABEL: Record<Perk["frequency"], string> = {
+  per_year: "/ year",
+  per_policy_term: "/ policy",
+  per_event: "/ claim",
+  one_time: "once",
+  unlimited: "unlimited",
+};
+
+/**
+ * How a perk's limit is shown on its card: the amount big ("₹25,000"), a small muted frequency
+ * ("/ year", "/ policy", "unlimited"), and any qualifier from the label ("50% up to") kept small.
+ */
+export function perkAmount(p: Perk, sumInsuredInr = 0): { prefix: string; amount: string; freq: string } {
+  if (typeof p.capInr === "number" && p.capInr > 0 && !isSumInsuredLimited(p, sumInsuredInr)) {
+    const amount = `₹${p.capInr.toLocaleString("en-IN")}`;
+    const at = p.capLabel.indexOf(amount);
+    // "50% up to ₹10,000" → prefix "50% up to"; "₹1,000/day, max ₹7,000" → prefix "₹1,000/day, max".
+    const prefix = at > 0 ? p.capLabel.slice(0, at).trim().replace(/[,:]$/, "") : "";
+    return { prefix, amount, freq: FREQ_LABEL[p.frequency] };
+  }
+  const label = p.capLabel.trim() || "Covered";
+  // "Unlimited" already says it; don't add "unlimited" again.
+  const freq = /unlimited/i.test(label) || p.frequency !== "unlimited" ? "" : FREQ_LABEL.unlimited;
+  return { prefix: "", amount: label, freq };
+}
+
+/** The card's description says what it covers; amounts are already shown big, so strip them. */
+export function perkDescription(p: Perk): string {
+  const cleaned = p.oneLiner
+    .replace(/\(?\b(?:up to|upto|max(?:imum)?|capped at|limit(?:ed)? (?:of|to))?\s*(?:₹|Rs\.?|INR)\s?[\d,]+(?:\.\d+)?(?:\s*(?:a|per|\/)\s*(?:policy )?(?:year|yr|policy|claim|event|day))?\)?/gi, "")
+    .replace(/\s+([,.;:])/g, "$1")
+    .replace(/^[\s,.;:–—-]+|[\s,;:–—-]+$/g, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/,\s*\./g, ".")
+    .trim();
+  if (!cleaned) return p.oneLiner.trim();
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}

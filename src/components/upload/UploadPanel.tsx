@@ -190,17 +190,17 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
               <br />
               <span className="bg-gradient-to-r from-brand via-brand-2 to-warm bg-clip-text text-transparent">Start using them.</span>
             </h1>
-            <p className="mt-3 text-xl font-medium text-muted-foreground">See what you&apos;re owed in 20 seconds.</p>
+            <p className="mt-3 text-xl font-medium text-muted-foreground">Discover the perks you&apos;re already paying for.</p>
 
             <ul className="mx-auto mt-7 mb-7 grid max-w-[520px] gap-3 text-left text-base">
               <li className="flex items-center gap-3.5">
-                <EmojiCircle emoji="🩺" tone="bg-warm-soft" />
+                <EmojiCircle emoji="🩺" tone="bg-warm-soft" size="lg" />
                 <span>
                   Only <b>1 in 10</b> people use their free health check-up.
                 </span>
               </li>
               <li className="flex items-center gap-3.5">
-                <EmojiCircle emoji="🔍" tone="bg-brand-soft" />
+                <EmojiCircle emoji="🔍" tone="bg-brand-soft" size="lg" />
                 <span>Most policies hide OPD, dental, wellness rewards and discounts in the fine print.</span>
               </li>
             </ul>
@@ -369,9 +369,16 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
   );
 }
 
-function EmojiCircle({ emoji, tone }: { emoji: string; tone: string }) {
+function EmojiCircle({ emoji, tone, size = "md" }: { emoji: string; tone: string; size?: "md" | "lg" }) {
   return (
-    <span aria-hidden className={cn("grid size-12 shrink-0 place-items-center rounded-full text-[26px] leading-none", tone)}>
+    <span
+      aria-hidden
+      className={cn(
+        "grid shrink-0 place-items-center rounded-full leading-none",
+        size === "lg" ? "size-14 text-[44px] sm:size-16 sm:text-[56px]" : "size-12 text-[26px]",
+        tone,
+      )}
+    >
       {emoji}
     </span>
   );
