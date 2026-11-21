@@ -1,7 +1,23 @@
 {
-  "Whom do I call in an emergency?": "COVERED\n- Call the 24x7 helpline **1800 000 1234** and tell them within **24 hours** of an emergency admission.\n- Need an air ambulance? Call **1800 000 9111**; covered up to **₹2,50,000** a year for life-threatening cases, with pre-approval.\n- Road ambulance is covered up to **₹3,000** per hospitalisation.\nSource: page 2, page 3",
-  "Is my hospital cashless?": "NOT IN YOUR DOCUMENTS\n- Cashless works only at **network hospitals**. Check the list in the Aarogya app or website, or call **1800 000 1234**.\n- Planned admission: inform them **48 hours** before. Emergency: within **24 hours**.\n- Show your e-card at the hospital insurance desk.\nSource: page 3",
-  "I broke my wrist. What is covered?": "COVERED\n- **If admitted:** covered up to your **₹10,00,000** sum insured, cashless at a network hospital. Call 1800 000 1234 within 24 hours.\n- **If treated without admission** (plaster, X-ray): up to **₹5,000** a year under OPD, as reimbursement.\n- Injuries from adventure sports are excluded.\nSource: page 2, page 3, page 4",
-  "I need a tooth extraction. Is it covered?": "PARTLY COVERED\n- Covered under **OPD dental**, up to **₹10,000 a year**.\n- It's **reimbursement**: pay the dentist, then claim in the app within 30 days with the bill and prescription.\n- Cosmetic dentistry isn't covered.\nSource: page 2, page 3",
-  "When can I use my free health check-up?": "COVERED\n- One check-up every policy year, up to **₹10,000**.\n- **Cashless** at partner diagnostic centres; book it in the Aarogya app.\n- Your policy year runs from 1 January.\nSource: page 1, page 2"
+  "Emergency number?": "Call **1800 000 1234**, 24×7. Inform them within 24 hours of admission.\nSource: p.3\nFOLLOWUPS: Air ambulance number? | Senior citizen helpline? | Claims email?",
+  "Air ambulance number?": "Call the air ambulance desk on **1800 000 9111**.\nSource: p.3\nFOLLOWUPS: Is air ambulance covered? | Other helpline numbers? | Road ambulance limit?",
+  "Senior citizen helpline?": "Call **1800 000 5678**.\nSource: p.3\nFOLLOWUPS: Other helpline numbers? | Emergency number? | Claims email?",
+  "Other helpline numbers?": "24×7 helpline **1800 000 1234**, senior citizens **1800 000 5678**, air ambulance **1800 000 9111**.\nSource: p.3\nFOLLOWUPS: Claims email? | Grievance email?",
+  "Claims email?": "Email **claims@aarogya-example.in**, or claim in the Aarogya app.\nSource: p.3\nFOLLOWUPS: Claim deadline? | Documents needed for a claim? | Grievance email?",
+  "Grievance email?": "Write to **grievance@aarogya-example.in**.\nSource: p.3\nFOLLOWUPS: Claims email? | Other helpline numbers?",
+  "Claim deadline?": "Within **30 days** of discharge.\nSource: p.3\nFOLLOWUPS: Documents needed for a claim? | Claims email?",
+  "Documents needed for a claim?": "The claim form, original bills, prescriptions and the discharge summary.\nSource: p.3\nFOLLOWUPS: Claim deadline? | Claims email?",
+  "Is air ambulance covered?": "COVERED\nUp to **₹2,50,000** a year, for life-threatening emergencies, with pre-approval.\nSource: p.2\nFOLLOWUPS: Air ambulance number? | Road ambulance limit?",
+  "Road ambulance limit?": "Up to **₹3,000** per hospitalisation.\nSource: p.2\nFOLLOWUPS: Is air ambulance covered? | Emergency number?",
+  "Tooth extraction covered?": "PARTLY COVERED\nYes, up to **₹10,000 a year** under OPD dental, as reimbursement only.\nSource: p.2, p.3\nFOLLOWUPS: Root canal covered? | Dental waiting period? | How do I claim dental?",
+  "Root canal covered?": "PARTLY COVERED\nYes, within the same **₹10,000 a year** OPD dental limit, as reimbursement.\nSource: p.2\nFOLLOWUPS: Fillings and scaling covered? | Cosmetic dentistry covered? | How do I claim dental?",
+  "Fillings and scaling covered?": "PARTLY COVERED\nYes, within the same **₹10,000 a year** OPD dental limit, as reimbursement.\nSource: p.2\nFOLLOWUPS: Root canal covered? | Cosmetic dentistry covered? | How do I claim dental?",
+  "Cosmetic dentistry covered?": "NOT COVERED\nNo, cosmetic dentistry is excluded.\nSource: p.2, p.4\nFOLLOWUPS: Root canal covered? | Dental waiting period?",
+  "Dental waiting period?": "**90 days** from your policy start date.\nSource: p.4\nFOLLOWUPS: Tooth extraction covered? | How do I claim dental?",
+  "How do I claim dental?": "Pay the dentist, then submit the bill and prescription in the Aarogya app within **30 days**.\nSource: p.3\nFOLLOWUPS: Documents needed for a claim? | Claims email?",
+  "Free health check-up?": "COVERED\nOne check-up each policy year, up to **₹10,000**, cashless at partner labs.\nSource: p.2\nFOLLOWUPS: How do I book it? | Does an unused one carry over? | Teleconsult a doctor?",
+  "How do I book it?": "Book it in the **Aarogya app** at a partner diagnostic centre.\nSource: p.2\nFOLLOWUPS: Does an unused one carry over? | Teleconsult a doctor?",
+  "Does an unused one carry over?": "NOT IN YOUR DOCUMENTS\nThe policy says once per policy year but not whether a skipped one carries over. Ask on **1800 000 1234**.\nSource: p.2\nFOLLOWUPS: How do I book it? | Teleconsult a doctor?",
+  "Teleconsult a doctor?": "COVERED\nYes, **unlimited** GP and specialist teleconsults, 24×7 in the Aarogya app.\nSource: p.2\nFOLLOWUPS: Doctor visits covered? | Free health check-up?",
+  "Doctor visits covered?": "PARTLY COVERED\nUp to **₹5,000 a year** for consultations, tests and medicines without admission, as reimbursement.\nSource: p.2\nFOLLOWUPS: Documents needed for a claim? | Teleconsult a doctor?"
 }

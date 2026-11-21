@@ -6,7 +6,7 @@ Hackathon MVP (Razorpay Rize x AILC "Fix My Itch", 21 Nov). Live demo. Build tim
 1. User uploads a health insurance policy PDF + optional insurer-app screenshots (rewards / step coins).
 2. Server extracts PDF text, **redacts personal data**, sends text + images to Claude, gets structured JSON.
 3. Dashboard: hero ₹ value of perks vs annual premium, perk cards, step-rewards card, red flags.
-4. Chat ("Ask your policy"): streamed answers grounded ONLY in the redacted text + extraction JSON, each with a verdict and a page source.
+4. Chat ("Talk to your policy"): short streamed answers grounded ONLY in the redacted text + extraction JSON, with a page source, a verdict for coverage questions, and 2–3 follow-up chips.
 
 Visual target: `design/mock.html` (open it in a browser; match its layout, spacing, colours and copy).
 
@@ -24,7 +24,7 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - `prompts/extract.md`, `prompts/chat.md` → system prompts (load as strings)
 - `demo/aarogya-policy.pdf`, `demo/rewards-screenshot.png` → FICTIONAL demo inputs
 - `demo/extraction.json` → expected output / fallback for demo mode
-- `demo/cached-answers.json` → fallback answers for the 5 suggested questions
+- `demo/cached-answers.json` → demo answers for the 3 starter chips and every follow-up they lead to
 
 ## Routes
 - `POST /api/analyze` (multipart: `policy` PDF, `screens[]` images)
@@ -42,7 +42,7 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - `PerkGrid` / `PerkCard` — emoji, name, ₹cap + frequency, one-liner, claim-mode tag, page badge. Group by `category`.
 - `RewardsCard` — coin ring, "redeem now" item(s), next item + gap, renewal-discount note. Hide if no screenshot.
 - `RedFlags` — severity colour (high = red, medium = amber), title, why, page.
-- `ChatPanel` — sticky right column; suggested chips; messages render verdict pill (COVERED / PARTLY COVERED / NOT COVERED / NOT IN YOUR DOCUMENTS) parsed from the first line, then markdown body, then source line.
+- `ChatPanel` — "Talk to your policy", sticky right column; 3 starter chips, then the latest answer's follow-ups + "Ask something else"; messages render a verdict pill only if line 1 is exactly COVERED / PARTLY COVERED / NOT COVERED / NOT IN YOUR DOCUMENTS, then the markdown body, then the source line; the `FOLLOWUPS:` line becomes chips.
 - Motion: cards stagger in (50 ms), hero counter 1.2 s, skeletons while loading.
 
 ## Rules

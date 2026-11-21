@@ -169,13 +169,18 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
             e.target.value = "";
           }}
         />
-        {policy && (
+        {policy ? (
           <FileRow
             icon={<FileText className="size-5 text-brand" />}
             name={policy.name}
             meta={`PDF · ${fileSize(policy.size)}`}
             onRemove={analyzing ? undefined : () => setPolicy(null)}
           />
+        ) : (
+          <SlotRow icon={<FileText className="size-5" />} label="Your policy PDF" hint="required" />
+        )}
+        {screens.length > 0 && (
+          <div className="-mb-1.5 text-left text-xs font-semibold text-muted-foreground">Optional: app rewards screenshot</div>
         )}
         {screens.map((s, i) => (
           <FileRow
@@ -186,13 +191,20 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
             onRemove={analyzing ? undefined : () => setScreens((xs) => xs.filter((_, j) => j !== i))}
           />
         ))}
+        {!screens.length && (
+          <SlotRow
+            icon={<Smartphone className="size-5" />}
+            label="Optional: app rewards screenshot"
+            hint="step coins / rewards store"
+          />
+        )}
         <div className="text-[13px] text-muted-foreground">
           {busy === "adding" ? (
             "Preparing screenshots…"
           ) : (
             <>
-              <b className="text-brand">Drop your policy PDF</b> and up to {MAX_SCREENS} app screenshots here, or click to choose ·
-              nothing is stored
+              <b className="text-brand">Drop files here or click to choose</b> · up to {MAX_SCREENS} screenshots · nothing is
+              stored
             </>
           )}
         </div>
@@ -243,6 +255,16 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
           <Step state={perks.state === "done" ? "done" : "todo"}>Done</Step>
         </div>
       )}
+    </div>
+  );
+}
+
+function SlotRow({ icon, label, hint }: { icon: React.ReactNode; label: string; hint: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-dashed border-brand-line bg-white/60 px-3.5 py-3 text-left text-muted-foreground">
+      {icon}
+      <span className="min-w-0 flex-1 truncate font-semibold">{label}</span>
+      <small className="shrink-0 text-xs">{hint}</small>
     </div>
   );
 }
