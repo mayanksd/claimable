@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import { parseAnswer, VERDICTS, type Verdict } from "@/lib/answer";
 import { cn } from "@/lib/utils";
+import { ErrorText } from "@/components/ErrorDetail";
 
 const PILL: Record<Verdict, string> = {
   COVERED: "bg-good-soft text-good",
@@ -57,7 +58,7 @@ export function QuestionBubble({ text }: { text: string }) {
 export function ErrorBubble({ text }: { text: string }) {
   return (
     <div role="alert" className={cn(bubble, "border-bad/30 bg-bad-soft text-bad")}>
-      {text}
+      <ErrorText text={text} />
     </div>
   );
 }

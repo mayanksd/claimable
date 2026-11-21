@@ -9,6 +9,7 @@ import { compressImage } from "@/lib/client/compress";
 import { runAnalysis } from "@/lib/client/analyze";
 import { LIMIT_HINT, MAX_PDF_BYTES, MAX_SCREENS, MAX_UPLOAD_BYTES, fileSize, mb, pdfTooBigMessage } from "@/lib/limits";
 import { cn } from "@/lib/utils";
+import { ErrorText } from "@/components/ErrorDetail";
 
 type StepState = "todo" | "run" | "done";
 type Progress = {
@@ -115,7 +116,7 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
           break;
         }
         case "error":
-          setError(e.message);
+          setError(e.detail ? `${e.message}\n\nDetails: ${e.detail}` : e.message);
           setProgress(IDLE);
           setBusy(null);
           break;
@@ -223,7 +224,7 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
             {notice && <p className="mt-3 text-sm text-muted-foreground">{notice}</p>}
             {error && (
               <div role="alert" className="mt-4 rounded-2xl border border-bad/30 bg-bad-soft px-4 py-3 text-left text-sm font-medium text-bad">
-                {error}
+                <ErrorText text={error} />
               </div>
             )}
 

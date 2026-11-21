@@ -1,9 +1,10 @@
-import { APICallError, convertToModelMessages, streamText, type UIMessage } from "ai";
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { model } from "@/lib/ai";
 import { redact } from "@/lib/redact";
 import { ExtractionSchema } from "@/lib/schema";
 import { MAX_CHAT_MESSAGES, MAX_QUESTION_CHARS, NO_KEY_MESSAGE, type ChatErrorCode } from "@/lib/chat";
 import { loadPrompt } from "@/lib/server/prompts";
+import { describeError, showErrorDetail, statusOf } from "@/lib/server/errors";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -43,11 +44,14 @@ export async function POST(req: Request) {
 
   return result.toUIMessageStreamResponse({
     onError: (err) => {
-      console.error("[chat]", err);
-      const status = APICallError.isInstance(err) ? err.statusCode : undefined;
-      return status === 401 || status === 403
-        ? "The AI key on this server was rejected (ANTHROPIC_API_KEY is invalid). Check it in your Vercel project settings."
-        : "Sorry, I couldn't answer that just now. Please try again.";
+      const detail = describeError(err);
+      console.error(`[chat] ${detail}`, err);
+      const status = statusOf(err);
+      const friendly =
+        status === 401 || status === 403
+          ? "The AI key on this server was rejected (ANTHROPIC_API_KEY is invalid). Check it in your Vercel project settings."
+          : "Sorry, I couldn't answer that just now. Please try again.";
+      return showErrorDetail() ? `${friendly}\n\nDetails: ${detail}` : friendly;
     },
   });
 }

@@ -16,7 +16,8 @@ export type AnalyzeEvent =
   | { type: "read"; pages: number; screens: number }
   | { type: "masked"; count: number; kinds: string[] }
   | { type: "done"; result: AnalysisResult }
-  | { type: "error"; message: string };
+  /** `detail` (raw upstream error) is only sent on preview / dev builds. */
+  | { type: "error"; message: string; detail?: string };
 
 const NOT_HEALTH: Record<string, string> = {
   pet: "pet insurance",

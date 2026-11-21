@@ -1,13 +1,14 @@
-import { APICallError, generateObject } from "ai";
+import { generateObject } from "ai";
 import { model } from "@/lib/ai";
 import { redact } from "@/lib/redact";
-import { ExtractionSchema } from "@/lib/schema";
+import { ExtractionModelSchema, normalizeExtraction } from "@/lib/modelSchema";
 import { withSourcesOnly } from "@/lib/extraction";
 import { demoEvents } from "@/lib/demoEvents";
 import { MAX_PDF_BYTES, MAX_SCREENS, MAX_UPLOAD_BYTES, SCANNED_PDF_MESSAGE, mb, pdfTooBigMessage } from "@/lib/limits";
 import { notHealthMessage, type AnalyzeEvent } from "@/lib/analysis";
 import { pdfToMarkedText } from "@/lib/server/pdf";
 import { loadPrompt } from "@/lib/server/prompts";
+import { describeError, showErrorDetail, statusOf } from "@/lib/server/errors";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -78,7 +79,7 @@ export async function POST(req: Request) {
     try {
       const { object } = await generateObject({
         model,
-        schema: ExtractionSchema,
+        schema: ExtractionModelSchema,
         system: loadPrompt("extract"),
         messages: [{ role: "user", content: [{ type: "text", text: redacted.text }, ...images] }],
       });
@@ -87,7 +88,7 @@ export async function POST(req: Request) {
         yield { type: "error", message: notHealth };
         return;
       }
-      const extraction = withSourcesOnly(object);
+      const extraction = withSourcesOnly(normalizeExtraction(object));
       if (!screens.length) extraction.rewards = null;
       yield {
         type: "done",
@@ -99,14 +100,16 @@ export async function POST(req: Request) {
         },
       };
     } catch (err) {
-      console.error("[analyze] extraction failed", err);
-      const status = APICallError.isInstance(err) ? err.statusCode : undefined;
+      const detail = describeError(err);
+      console.error(`[analyze] extraction failed: ${detail}`, err);
+      const status = statusOf(err);
       yield {
         type: "error",
         message:
           status === 401 || status === 403
             ? "The AI key on this server was rejected (ANTHROPIC_API_KEY is invalid). Check it in your Vercel project settings, or try the sample with ?demo=1."
             : "The AI couldn't read this policy just now. Please try again in a moment.",
+        ...(showErrorDetail() ? { detail } : {}),
       };
     }
   });
@@ -119,8 +122,10 @@ function streamEvents(gen: () => AsyncGenerator<AnalyzeEvent>): Response {
       try {
         for await (const ev of gen()) controller.enqueue(enc.encode(JSON.stringify(ev) + "\n"));
       } catch (err) {
-        console.error("[analyze]", err);
-        controller.enqueue(enc.encode(JSON.stringify({ type: "error", message: "Something went wrong. Please try again." }) + "\n"));
+        const detail = describeError(err);
+        console.error(`[analyze] ${detail}`, err);
+        const ev: AnalyzeEvent = { type: "error", message: "Something went wrong. Please try again.", ...(showErrorDetail() ? { detail } : {}) };
+        controller.enqueue(enc.encode(JSON.stringify(ev) + "\n"));
       } finally {
         controller.close();
       }
