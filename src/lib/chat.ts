@@ -7,3 +7,6 @@ export const NO_KEY_MESSAGE =
 /** Keep requests small: the policy text is sent once per request, so trim old turns. */
 export const MAX_CHAT_MESSAGES = 12;
 export const MAX_QUESTION_CHARS = 500;
+
+/** Starter chips before the first answer; demo/cached-answers.json has an answer for each. */
+export const STARTERS = ["Emergency number?", "Tooth extraction covered?", "Free health check-up?"];

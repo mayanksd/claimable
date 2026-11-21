@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check:redact": "node --experimental-strip-types --no-warnings scripts/check-redaction.mts"
+    "check:redact": "node --experimental-strip-types --no-warnings scripts/check-redaction.mts",
+    "test": "node --experimental-strip-types --no-warnings --test tests/*.test.mts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.115",

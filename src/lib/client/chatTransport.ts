@@ -1,9 +1,9 @@
 import { DefaultChatTransport, type ChatTransport, type UIMessage, type UIMessageChunk } from "ai";
 import type { Extraction } from "@/lib/schema";
-import { MAX_CHAT_MESSAGES } from "@/lib/chat";
+import { MAX_CHAT_MESSAGES, STARTERS } from "@/lib/chat";
 
-export const DEMO_FREE_TEXT_MESSAGE =
-  "In demo mode I can answer the suggested questions below. Tap one to see how answers work.";
+/** Shown in demo mode without a key; its FOLLOWUPS line brings the starter chips back. */
+export const DEMO_FREE_TEXT_MESSAGE = `In demo mode I can only answer the suggested questions. Tap one below.\nFOLLOWUPS: ${STARTERS.join(" | ")}`;
 
 const textOf = (m: UIMessage | undefined) =>
   m?.parts.map((p) => (p.type === "text" ? p.text : "")).join("").trim() ?? "";

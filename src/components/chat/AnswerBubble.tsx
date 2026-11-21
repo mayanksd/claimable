@@ -24,13 +24,13 @@ export function TypingBubble() {
 /** While the first line is still arriving it may be half a verdict ("PARTLY COV"): don't flash it as text. */
 function verdictPending(text: string) {
   if (text.includes("\n")) return false;
-  const t = text.trim().toUpperCase();
-  return VERDICTS.some((v) => v.startsWith(t) || t.startsWith(v));
+  const t = text.replace(/[*_`#]/g, "").trim();
+  return VERDICTS.some((v) => v.startsWith(t));
 }
 
 export function AnswerBubble({ text, streaming = false }: { text: string; streaming?: boolean }) {
   if (streaming && verdictPending(text)) return <TypingBubble />;
-  const { verdict, body, source } = parseAnswer(text);
+  const { verdict, body, source } = parseAnswer(text, { partial: streaming });
   return (
     <div className={bubble}>
       {verdict && (
@@ -38,10 +38,10 @@ export function AnswerBubble({ text, streaming = false }: { text: string; stream
           {verdict}
         </span>
       )}
-      <div className="[&_li]:ml-4 [&_li]:list-disc [&_p]:my-1 [&_strong]:font-bold [&_ul]:my-1">
+      <div className="[&_li]:ml-4 [&_li]:list-disc [&_p]:my-0.5 [&_strong]:font-bold [&_ul]:my-1">
         <ReactMarkdown>{body}</ReactMarkdown>
       </div>
-      {source && <div className="mt-2 text-[11px] text-muted-foreground">{source}</div>}
+      {source && <div className="mt-1.5 text-[11px] text-muted-foreground">{source}</div>}
     </div>
   );
 }
