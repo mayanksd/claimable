@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Extraction } from "@/lib/schema";
-import { MAX_QUESTION_CHARS, STARTERS } from "@/lib/chat";
+import { MAX_QUESTION_CHARS, STARTERS, withCheckupChip } from "@/lib/chat";
 import { parseAnswer } from "@/lib/answer";
 import { chatErrorMessage, createChatTransport } from "@/lib/client/chatTransport";
 import { AnswerBubble, ErrorBubble, QuestionBubble, TypingBubble } from "./AnswerBubble";
@@ -48,7 +48,15 @@ export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
   // Before the first answer: starter chips. After it: the latest answer's follow-ups + "Ask something else".
   const lastAnswer = messages.findLast((m) => m.role === "assistant");
   const started = !!lastAnswer;
-  const chips = started ? (busy && last === lastAnswer ? [] : parseAnswer(textOf(lastAnswer)).followups) : STARTERS;
+  const lastQuestion = messages.findLast((m) => m.role === "user");
+  const chips = !started
+    ? STARTERS
+    : busy && last === lastAnswer
+      ? []
+      : (() => {
+          const a = parseAnswer(textOf(lastAnswer));
+          return withCheckupChip(lastQuestion ? textOf(lastQuestion) : "", a.body, a.followups);
+        })();
 
   return (
     <Card className="flex h-[600px] flex-col overflow-hidden p-0 lg:sticky lg:top-[76px] lg:h-[calc(100vh-100px)]">

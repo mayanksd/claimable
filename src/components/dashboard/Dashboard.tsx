@@ -24,7 +24,7 @@ export function Dashboard({ extraction, redactedText, redactions, firstName, dem
         <h1 className="mb-3 text-2xl font-extrabold tracking-tight sm:text-[28px]">Hi{firstName ? ` ${firstName}` : ""} 👋</h1>
         <PrivacyBanner count={redactions.count} />
         <HeroValue policy={e.policy} heroValue={e.heroValue} />
-        <PerkGrid perks={e.perks} />
+        <PerkGrid perks={e.perks} policyText={redactedText} />
         <MoneyBack moneyBack={e.moneyBack} rewards={e.rewards} />
         <WatchOut flags={e.redFlags} />
       </main>

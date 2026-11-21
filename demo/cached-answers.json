@@ -15,9 +15,10 @@
   "Cosmetic dentistry covered?": "NOT COVERED\nNo, cosmetic dentistry is excluded.\nSource: p.2, p.4\nFOLLOWUPS: Root canal covered? | Dental waiting period?",
   "Dental waiting period?": "**90 days** from your policy start date.\nSource: p.4\nFOLLOWUPS: Tooth extraction covered? | How do I claim dental?",
   "How do I claim dental?": "Pay the dentist, then submit the bill and prescription in the Aarogya app within **30 days**.\nSource: p.3\nFOLLOWUPS: Documents needed for a claim? | Claims email?",
-  "Free health check-up?": "COVERED\nOne check-up each policy year, up to **₹10,000**, cashless at partner labs.\nSource: p.2\nFOLLOWUPS: How do I book it? | Does an unused one carry over? | Teleconsult a doctor?",
-  "How do I book it?": "Book it in the **Aarogya app** at a partner diagnostic centre.\nSource: p.2\nFOLLOWUPS: Does an unused one carry over? | Teleconsult a doctor?",
-  "Does an unused one carry over?": "NOT IN YOUR DOCUMENTS\nThe policy says once per policy year but not whether a skipped one carries over. Ask on **1800 000 1234**.\nSource: p.2\nFOLLOWUPS: How do I book it? | Teleconsult a doctor?",
+  "Free health check-up?": "COVERED\nOne check-up each policy year, up to **₹10,000**, cashless at partner labs.\nSource: p.2\nFOLLOWUPS: How do I max my check-up? | How do I book it? | Does an unused one carry over?",
+  "How do I book it?": "Book it in the **Aarogya app** at a partner diagnostic centre.\nSource: p.2\nFOLLOWUPS: How do I max my check-up? | Does an unused one carry over? | Teleconsult a doctor?",
+  "Does an unused one carry over?": "NOT IN YOUR DOCUMENTS\nThe policy says once per policy year but not whether a skipped one carries over. Ask on **1800 000 1234**.\nSource: p.2\nFOLLOWUPS: How do I max my check-up? | How do I book it?",
   "Teleconsult a doctor?": "COVERED\nYes, **unlimited** GP and specialist teleconsults, 24×7 in the Aarogya app.\nSource: p.2\nFOLLOWUPS: Doctor visits covered? | Free health check-up?",
-  "Doctor visits covered?": "PARTLY COVERED\nUp to **₹5,000 a year** for consultations, tests and medicines without admission, as reimbursement.\nSource: p.2\nFOLLOWUPS: Documents needed for a claim? | Teleconsult a doctor?"
+  "Doctor visits covered?": "PARTLY COVERED\nUp to **₹5,000 a year** for consultations, tests and medicines without admission, as reimbursement.\nSource: p.2\nFOLLOWUPS: Documents needed for a claim? | Teleconsult a doctor?",
+  "How do I max my check-up?": "Your check-up limit is **₹10,000** a year. Tap **Max my ₹10,000** on your check-up card to plan tests up to that limit.\nSource: p.2\nFOLLOWUPS: How do I book it? | Does an unused one carry over? | Teleconsult a doctor?"
 }

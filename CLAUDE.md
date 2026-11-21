@@ -40,7 +40,8 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - `PrivacyBanner` — "🔒 N personal fields were masked before AI read your policy."
 - Greeting — "Hi <first name> 👋"; the name comes from `redact()` and goes to the browser only, never to the model.
 - `HeroValue` — "You're sitting on ₹X of perks this year 🎉" with count-up; ratio bars vs `policy.annualPremiumInr`; premium 0 (unknown) → "up to ₹X", no ratio.
-- `PerkGrid` / `PerkCard` — "Use these this week": top 3 `use_now` perks, easy (cashless / in-app / free) before reimbursement; tag "Easy" / "Needs a claim"; "Show all perks (N)" expands the rest grouped by `category`.
+- `PerkGrid` / `PerkCard` — "Use these this week": top 3 `use_now` perks: biggest ₹ first (Easy before Needs a claim on a tie), last slot for the best unlimited/free perk; tag "Easy" / "Needs a claim"; "Show all perks (N)" expands the rest grouped by `category`.
+- `CheckupPlanner` — "Max my ₹X →" on the health check-up card: full-body base + add-ons up to the policy limit, running total bar; prices in `src/data/test-prices.ts`; only tests from the policy's list if it has one. No medical advice.
 - `MoneyBack` — `moneyBack` items (e.g. "Walk 8,000 steps a day → 10% off renewal") + coin ring / redeem now / next item when a rewards screenshot was given. Hidden if neither.
 - `WatchOut` — collapsed by default; severity colour (high = red, medium = amber), title, why, page.
 - `ChatPanel` — "Talk to your policy", sticky right column; 3 starter chips, then the latest answer's follow-ups + "Ask something else"; messages render a verdict pill only if line 1 is exactly COVERED / PARTLY COVERED / NOT COVERED / NOT IN YOUR DOCUMENTS, then the markdown body, then the source line; the `FOLLOWUPS:` line becomes chips.
