@@ -13,11 +13,13 @@ function Bar({ pct }: { pct: number }) {
 }
 
 type Props = Pick<Extraction, "policy" | "heroValue"> & {
+  /** Used when there's no ₹ total: "You've got N perks in your policy 🎉". */
+  perkCount: number;
   /** Skip the count-up (the reveal card just counted it). */
   instant?: boolean;
 };
 
-export function HeroValue({ policy, heroValue, instant = false }: Props) {
+export function HeroValue({ policy, heroValue, perkCount, instant = false }: Props) {
   const perks = heroValue.annualPerksValueInr;
   const premium = policy.annualPremiumInr;
   const knownPremium = premium > 0;
@@ -26,6 +28,22 @@ export function HeroValue({ policy, heroValue, instant = false }: Props) {
   const max = Math.max(perks, premium, 1);
   const ratio = heroValue.ratioToPremium || (knownPremium ? perks / premium : 0);
   const sub = [policy.product, policy.sumInsuredInr > 0 ? `${inrShort(policy.sumInsuredInr)} sum insured` : ""].filter(Boolean).join(" · ");
+
+  // Never a "₹0" hero: with no ₹ total, celebrate the perks themselves.
+  if (perks <= 0) {
+    return (
+      <section
+        className="relative overflow-hidden rounded-3xl p-6 text-white shadow-xl shadow-brand/25 sm:p-8"
+        style={{ background: "radial-gradient(130% 150% at 0% 0%, #4f46e5 0%, #7c3aed 50%, #e2557a 85%, #ff7a59 100%)" }}
+      >
+        <div className="font-display text-[34px] leading-tight font-extrabold sm:text-[44px]">
+          You&apos;ve got {perkCount} {perkCount === 1 ? "perk" : "perks"} in your policy 🎉
+        </div>
+        <p className="mt-2 text-xs font-medium opacity-85">Limits from your policy. How you claim depends on its terms.</p>
+        {sub && <div className="mt-3 text-sm opacity-80">{sub}</div>}
+      </section>
+    );
+  }
 
   return (
     <section

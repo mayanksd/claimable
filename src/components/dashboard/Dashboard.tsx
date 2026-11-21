@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import type { Extraction } from "@/lib/schema";
 import { withSourcesOnly } from "@/lib/extraction";
-import { withComputedHero } from "@/lib/perks";
+import { heroMode, withComputedHero } from "@/lib/perks";
+import { WordingOnlyCard } from "./WordingOnlyCard";
 import { claimedKey, claimedTotal } from "@/lib/claimed";
 import { formatDay, nextPolicyYearStart } from "@/lib/policyDates";
 import { useClaimed } from "@/lib/client/useClaimed";
@@ -30,6 +31,8 @@ type Props = {
   cachedAnswers: Record<string, string>;
   /** The reveal card already counted the ₹ up; show the hero total straight away. */
   revealed?: boolean;
+  /** "Upload my policy →" on the wording-only card: start over with this file chosen. */
+  onUploadPolicy: (file: File) => void;
   /** Family / lifestyle / watch-out data still loading (part B). */
   pending?: boolean;
   partBFailed?: boolean;
@@ -37,13 +40,14 @@ type Props = {
 
 const EMPLOYER_TIP = "Tip: check your employer's group policy — they often cover maternity from day one.";
 
-export function Dashboard({ extraction, redactedText, firstName, demo, cachedAnswers, revealed, pending, partBFailed }: Props) {
+export function Dashboard({ extraction, redactedText, firstName, demo, cachedAnswers, revealed, pending, partBFailed, onUploadPolicy }: Props) {
   // Hero total is recomputed in code (also for saved results from older builds).
   const e = useMemo(() => withComputedHero(withSourcesOnly(extraction)), [extraction]);
   const [tab, setTab] = useState("perks");
   const { claimed, toggle } = useClaimed(claimedKey(e));
 
 
+  const mode = heroMode(e);
   const flags = watchOutFlags(e);
 
   const reset = e.checkupFrequency?.everyYear ? nextPolicyYearStart(e.policy.startDate, new Date()) : null;
@@ -61,14 +65,16 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
             </h1>
             {e.documentType === "group_health" && <Badge variant="default">Employer policy</Badge>}
           </div>
-          <p className="text-base font-medium text-muted-foreground">Here&apos;s what your policy owes you.</p>
+          <p className="text-base font-medium text-muted-foreground">
+            {mode === "wording" ? "Here's what this plan can include." : "Here's what your policy owes you."}
+          </p>
         </div>
-        {!e.isScheduleIncluded && (
-          <div className="mb-4 rounded-xl border border-warn-line bg-warn-soft px-3.5 py-2.5 text-sm font-medium text-foreground">
-            📄 We only found the general policy wording. Upload the full PDF with your schedule to see your exact perks.
-          </div>
+        {mode === "wording" ? (
+          // Wording only: an honest card instead of the ₹ hero (no ₹, no premium comparison).
+          <WordingOnlyCard perkCount={e.perks.length} onUpload={onUploadPolicy} />
+        ) : (
+          <HeroValue policy={e.policy} heroValue={e.heroValue} perkCount={e.perks.length} instant={revealed} />
         )}
-        <HeroValue policy={e.policy} heroValue={e.heroValue} instant={revealed} />
 
         <Tabs
           active={tab}
@@ -116,8 +122,12 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
                 onToggleClaimed={toggle}
                 checkupResetNote={resetNote}
                 sumInsuredInr={e.policy.sumInsuredInr}
+                title={mode === "wording" ? "Perks this plan can include" : undefined}
               />
-              <ClaimedProgress claimed={claimedTotal(e, claimed)} total={e.heroValue.annualPerksValueInr} />
+              {/* The ₹ meter needs your own limits; skip it for wording-only uploads. */}
+              {mode !== "wording" && (
+                <ClaimedProgress claimed={claimedTotal(e, claimed)} total={e.heroValue.annualPerksValueInr} />
+              )}
               <OptionalCovers covers={e.optionalCovers} />
               <MoneyBack moneyBack={e.moneyBack} rewards={e.rewards} />
             </>

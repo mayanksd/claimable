@@ -25,9 +25,11 @@ type Props = {
   onToggleClaimed: (id: string) => void;
   checkupResetNote: string | null;
   sumInsuredInr?: number;
+  /** e.g. "Perks this plan can include" for wording-only uploads. */
+  title?: string;
 };
 
-export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupResetNote, sumInsuredInr = 0 }: Props) {
+export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupResetNote, sumInsuredInr = 0, title = "Use these this week" }: Props) {
   const [open, setOpen] = useState(false);
   const [planFor, setPlanFor] = useState<string | null>(null);
 
@@ -61,7 +63,7 @@ export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupR
 
   return (
     <section>
-      <SectionTitle title="Use these this week" hint="biggest value first" />
+      <SectionTitle title={title} hint="biggest value first" />
       <div className={grid}>
         {top.map(card)}
         {planner(top)}

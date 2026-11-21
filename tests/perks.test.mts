@@ -107,3 +107,13 @@ test("description doesn't repeat the amount", () => {
 test("sample: descriptions unchanged where they had no amounts", () => {
   for (const p of demo.perks) assert.doesNotMatch(perkDescription(p), /₹\s?[\d,]{3,}/, p.id);
 });
+
+import { heroMode } from "../src/lib/perks.ts";
+
+test("hero mode: wording-only → honest card; ₹0 → perk count; never a ₹0 hero", () => {
+  assert.equal(heroMode(demo), "value");
+  assert.equal(heroMode({ ...demo, isScheduleIncluded: false }), "wording");
+  const noMoney = demo.perks.map((p: any) => ({ ...p, capInr: null }));
+  assert.equal(heroMode({ ...demo, perks: noMoney }), "count");
+  assert.equal(heroMode({ ...demo, perks: [] }), "count");
+});
