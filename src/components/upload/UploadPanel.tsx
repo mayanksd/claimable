@@ -132,8 +132,20 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
         <br />
         <span className="bg-gradient-to-r from-brand to-brand-2 bg-clip-text text-transparent">Start using them.</span>
       </h1>
-      <p className="mb-7 text-[17px] text-muted-foreground">
-        Upload your health policy and your insurer app&apos;s rewards screen. See what you&apos;re owed in 20 seconds.
+      <ul className="mx-auto mt-5 mb-5 grid max-w-[520px] gap-2 text-left text-[15px] sm:text-base">
+        <li className="flex gap-2.5">
+          <span aria-hidden>🩺</span>
+          <span>
+            Only <b>1 in 10</b> people use their free health check-up.
+          </span>
+        </li>
+        <li className="flex gap-2.5">
+          <span aria-hidden>🔍</span>
+          <span>Most policies hide OPD, dental, wellness rewards and discounts in the fine print.</span>
+        </li>
+      </ul>
+      <p className="mb-7 text-[15px] text-muted-foreground">
+        Upload your policy (and, if you like, your insurer app&apos;s rewards screen). See what you&apos;re owed in 20 seconds.
       </p>
 
       <div
@@ -210,7 +222,7 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
         </div>
       </div>
 
-      <p className="mt-2.5 text-xs font-medium text-muted-foreground">{LIMIT_HINT}</p>
+      <p className="mt-2.5 text-[13px] font-medium text-muted-foreground">{LIMIT_HINT}</p>
       {notice && <p className="mt-3 text-sm text-muted-foreground">{notice}</p>}
       {error && (
         <div role="alert" className="mt-4 rounded-xl border border-bad/30 bg-bad-soft px-4 py-3 text-left text-sm font-medium text-bad">

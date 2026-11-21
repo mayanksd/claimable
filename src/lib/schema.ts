@@ -30,13 +30,20 @@ export const RewardItemSchema = z.object({
   available: z.boolean().describe("False if greyed out / out of stock in the screenshot"),
 });
 
+export const MoneyBackSchema = z.object({
+  emoji: z.string(),
+  title: z.string().describe("Action → reward, e.g. 'Walk 8,000 steps a day → 10% off renewal', max 10 words"),
+  detail: z.string().describe("The condition in plain words, max 15 words"),
+  sourcePage: z.number().int(),
+});
+
 export const ExtractionSchema = z.object({
   policy: z.object({
     insurer: z.string(),
     product: z.string(),
     sumInsuredInr: z.number(),
     tenureYears: z.number(),
-    annualPremiumInr: z.number().describe("Gross premium divided by tenure years"),
+    annualPremiumInr: z.number().describe("Gross premium divided by tenure years; 0 if the premium is not in the document"),
     periodLabel: z.string(),
   }),
   perks: z.array(PerkSchema),
@@ -55,6 +62,10 @@ export const ExtractionSchema = z.object({
     })
     .nullable()
     .describe("Null if no rewards screenshot was provided"),
+  moneyBack: z
+    .array(MoneyBackSchema)
+    .default([])
+    .describe("Ways to earn money back: wellness reward coins, renewal / no-claim premium discounts, cashback. Empty if none"),
   redFlags: z.array(RedFlagSchema),
   contacts: z.array(z.object({ purpose: z.string(), value: z.string(), sourcePage: z.number().int() })),
   ambiguities: z.array(z.object({ wording: z.string(), questionForInsurer: z.string(), sourcePage: z.number().int() })),

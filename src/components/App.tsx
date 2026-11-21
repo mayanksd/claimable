@@ -58,6 +58,7 @@ export function App() {
           extraction={result.extraction}
           redactedText={result.redactedText}
           redactions={result.redactions}
+          firstName={result.firstName}
           demo={demo}
           cachedAnswers={cachedAnswers}
         />

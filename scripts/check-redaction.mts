@@ -13,6 +13,6 @@ console.log("helpline kept:", r.text.includes("1800 000 1234"), "claims email ke
 // OUT=demo/redacted-policy.json writes the demo-mode fixture (redacted text + counts).
 if (process.env.OUT) {
   const { writeFileSync } = await import("node:fs");
-  writeFileSync(process.env.OUT, JSON.stringify({ text: r.text, count: r.count, kinds: r.kinds }, null, 2) + "\n");
+  writeFileSync(process.env.OUT, JSON.stringify({ text: r.text, count: r.count, kinds: r.kinds, firstName: r.firstName }, null, 2) + "\n");
   console.log("wrote", process.env.OUT);
 }

@@ -6,6 +6,8 @@ export type AnalysisResult = {
   extraction: Extraction;
   redactedText: string;
   redactions: Redactions;
+  /** From the policyholder line, for the greeting. Kept in the browser; never sent to the model. */
+  firstName?: string | null;
   sample?: boolean;
 };
 

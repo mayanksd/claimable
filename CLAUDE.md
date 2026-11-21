@@ -38,10 +38,11 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 ## UI components
 - `UploadPanel` — dropzone (PDF + images), file chips, "Find my perks" button, progress steps (Reading → Protected N personal fields → Finding perks → Done).
 - `PrivacyBanner` — "🔒 N personal fields were masked before AI read your policy."
-- `HeroValue` — animated count-up of `heroValue.annualPerksValue`, ratio bars vs `policy.annualPremium`.
-- `PerkGrid` / `PerkCard` — emoji, name, ₹cap + frequency, one-liner, claim-mode tag, page badge. Group by `category`.
-- `RewardsCard` — coin ring, "redeem now" item(s), next item + gap, renewal-discount note. Hide if no screenshot.
-- `RedFlags` — severity colour (high = red, medium = amber), title, why, page.
+- Greeting — "Hi <first name> 👋"; the name comes from `redact()` and goes to the browser only, never to the model.
+- `HeroValue` — "You're sitting on ₹X of perks this year 🎉" with count-up; ratio bars vs `policy.annualPremiumInr`; premium 0 (unknown) → "up to ₹X", no ratio.
+- `PerkGrid` / `PerkCard` — "Use these this week": top 3 `use_now` perks, easy (cashless / in-app / free) before reimbursement; tag "Easy" / "Needs a claim"; "Show all perks (N)" expands the rest grouped by `category`.
+- `MoneyBack` — `moneyBack` items (e.g. "Walk 8,000 steps a day → 10% off renewal") + coin ring / redeem now / next item when a rewards screenshot was given. Hidden if neither.
+- `WatchOut` — collapsed by default; severity colour (high = red, medium = amber), title, why, page.
 - `ChatPanel` — "Talk to your policy", sticky right column; 3 starter chips, then the latest answer's follow-ups + "Ask something else"; messages render a verdict pill only if line 1 is exactly COVERED / PARTLY COVERED / NOT COVERED / NOT IN YOUR DOCUMENTS, then the markdown body, then the source line; the `FOLLOWUPS:` line becomes chips.
 - Motion: cards stagger in (50 ms), hero counter 1.2 s, skeletons while loading.
 

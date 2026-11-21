@@ -8,7 +8,7 @@ export const MAX_PDF_LABEL = "4 MB";
 // Rounded up so a file just over the limit never reads "4.0 MB".
 export const mb = (bytes: number) => `${(Math.ceil((bytes / 1024 / 1024) * 10) / 10).toFixed(1)} MB`;
 
-export const LIMIT_HINT = `PDF up to ${MAX_PDF_LABEL} · screenshots are resized automatically`;
+export const LIMIT_HINT = `Upload the full policy PDF, including the first pages (your schedule). PDF up to ${MAX_PDF_LABEL}.`;
 
 export const pdfTooBigMessage = (bytes: number) =>
   `This PDF is ${mb(bytes)}. Please upload a file under ${MAX_PDF_LABEL} — tip: upload just the policy schedule / benefits pages, or compress it at ilovepdf.com.`;

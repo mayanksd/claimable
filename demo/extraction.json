@@ -224,6 +224,20 @@
     },
     "programmeNote": "Average 8,000 steps a day over the policy year for 10% off your renewal premium (page 3)."
   },
+  "moneyBack": [
+    {
+      "emoji": "👟",
+      "title": "Walk 8,000 steps a day → 10% off renewal",
+      "detail": "Average 8,000 steps a day across the policy year.",
+      "sourcePage": 3
+    },
+    {
+      "emoji": "🪙",
+      "title": "Steps above 3,000 a day → StepUp coins",
+      "detail": "1 coin per 10 extra steps; spend them in the app's rewards store.",
+      "sourcePage": 3
+    }
+  ],
   "redFlags": [
     {
       "id": "zone-copay",

@@ -4,5 +4,5 @@ const hasPage = (x: { sourcePage?: number | null }) => typeof x.sourcePage === "
 
 /** CLAUDE.md rule: every perk and red flag must cite a page; drop the ones that don't. */
 export function withSourcesOnly(e: Extraction): Extraction {
-  return { ...e, perks: e.perks.filter(hasPage), redFlags: e.redFlags.filter(hasPage) };
+  return { ...e, perks: e.perks.filter(hasPage), redFlags: e.redFlags.filter(hasPage), moneyBack: e.moneyBack.filter(hasPage) };
 }

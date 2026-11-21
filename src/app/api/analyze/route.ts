@@ -86,7 +86,12 @@ export async function POST(req: Request) {
       if (!screens.length) extraction.rewards = null;
       yield {
         type: "done",
-        result: { extraction, redactedText: redacted.text, redactions: { count: redacted.count, kinds: redacted.kinds } },
+        result: {
+          extraction,
+          redactedText: redacted.text,
+          redactions: { count: redacted.count, kinds: redacted.kinds },
+          firstName: redacted.firstName,
+        },
       };
     } catch (err) {
       console.error("[analyze] extraction failed", err);

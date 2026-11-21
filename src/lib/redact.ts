@@ -17,7 +17,22 @@ const RULES: Rule[] = [
   { kind: "Date of birth", re: /\b\d{2}\/\d{2}\/(19|20)\d{2}\b(?=\s+\d{2}\s+Self)/g, mask: "[DOB]" },
 ];
 
-export function redact(input: string): { text: string; count: number; kinds: string[] } {
+export type Redacted = {
+  text: string;
+  count: number;
+  kinds: string[];
+  /** Policyholder's first name, for the greeting. Browser only: never put it in anything sent to the model. */
+  firstName: string | null;
+};
+
+/** "Mr ROHAN MEHTA" → "Rohan" */
+function toFirstName(full: string): string | null {
+  const first = full.split(" ")[0].replace(/\./g, "");
+  if (!/^[A-Za-z]{2,}$/.test(first)) return null;
+  return first[0].toUpperCase() + first.slice(1).toLowerCase();
+}
+
+export function redact(input: string): Redacted {
   let text = input;
   let count = 0;
   const kinds = new Set<string>();
@@ -36,7 +51,7 @@ export function redact(input: string): { text: string; count: number; kinds: str
       text = text.replace(re, () => { count++; kinds.add("Name"); return "[NAME]"; });
     }
   }
-  return { text, count, kinds: [...kinds] };
+  return { text, count, kinds: [...kinds], firstName: holder ? toFirstName(holder[1]) : null };
 }
 // Note: the email rule skips the insurer's own domain so claims/helpline emails survive.
 // For a real insurer, replace "aarogya-example" with a list of insurer domains.

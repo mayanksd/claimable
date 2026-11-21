@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Extraction } from "@/lib/schema";
+import { effortTag } from "@/lib/perks";
 
 type Perk = Extraction["perks"][number];
 
@@ -12,16 +13,8 @@ const FREQ: Record<Perk["frequency"], string> = {
   unlimited: "",
 };
 
-const MODE: Record<Perk["claimMode"], { label: string; variant: "default" | "good" } | null> = {
-  reimbursement: { label: "Reimbursement", variant: "default" },
-  cashless: { label: "Cashless", variant: "good" },
-  free: { label: "Free", variant: "good" },
-  in_app: { label: "In app", variant: "good" },
-  unknown: null,
-};
-
 export function PerkCard({ perk }: { perk: Perk }) {
-  const mode = MODE[perk.claimMode];
+  const tag = effortTag(perk);
   // Show "/ year" etc. only next to a plain rupee cap, as in the mock.
   const freq = perk.capInr !== null && /^₹[\d,]+$/.test(perk.capLabel) ? FREQ[perk.frequency] : "";
   return (
@@ -37,7 +30,7 @@ export function PerkCard({ perk }: { perk: Perk }) {
         {perk.capLabel} {freq && <small className="text-xs font-medium text-muted-foreground">{freq}</small>}
       </div>
       <p className="mt-1.5 mb-2.5 text-[13px] text-muted-foreground">{perk.oneLiner}</p>
-      {mode && <Badge variant={mode.variant}>{mode.label}</Badge>}
+      {tag && <Badge variant={tag === "Easy" ? "good" : "default"}>{tag}</Badge>}
     </Card>
   );
 }
