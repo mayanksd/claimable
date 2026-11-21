@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, MotionConfig, motion, useReducedMotion } from "framer-motion";
 import { RevealCard } from "@/components/RevealCard";
 import { stopConfetti } from "@/lib/client/confetti";
-import { computeHeroValue } from "@/lib/perks";
+import { computeHeroValue, heroMode } from "@/lib/perks";
 import { withSourcesOnly } from "@/lib/extraction";
 import { Nav } from "@/components/Nav";
 import { Dashboard } from "@/components/dashboard/Dashboard";
@@ -42,6 +42,7 @@ export function App() {
   }, []);
 
   function show(r: AnalysisResult) {
+    setCarriedFile(null);
     setUploadError(null);
     setRevealDone(false);
     setResult(r);
@@ -84,6 +85,13 @@ export function App() {
     });
   }
 
+  // "Upload my policy →" on the wording-only card: back to upload with that PDF already chosen.
+  const [carriedFile, setCarriedFile] = useState<File | null>(null);
+  function uploadAnother(file: File) {
+    setCarriedFile(file);
+    startOver();
+  }
+
   function startOver() {
     setAttempt((n) => n + 1);
     setUploadError(null);
@@ -100,8 +108,10 @@ export function App() {
   const [revealDone, setRevealDone] = useState(false);
   const finishReveal = useCallback(() => setRevealDone(true), []);
   // Nothing to celebrate (₹0, e.g. not really a health policy) → no reveal, no confetti.
+  // Wording-only uploads and ₹0 totals get no reveal and no confetti (heroMode "wording" / "count").
   const revealTotal = result ? computeHeroValue(withSourcesOnly(result.extraction)).annualPerksValueInr : 0;
-  const revealing = !!result && fresh && !revealDone && !reduceMotion && revealTotal > 0;
+  const revealing =
+    !!result && fresh && !revealDone && !reduceMotion && heroMode(withSourcesOnly(result.extraction)) === "value";
   const view = !ready ? "loading" : result ? (revealing ? "reveal" : "dashboard") : "upload";
 
   return (
@@ -129,12 +139,13 @@ export function App() {
                 firstName={result.firstName}
                 pending={!!result.pending}
                 partBFailed={!!result.partBFailed}
+                onUploadPolicy={uploadAnother}
                 demo={demo}
                 cachedAnswers={cachedAnswers}
                 revealed={fresh}
               />
             ) : (
-              <UploadPanel demo={demo} onDone={show} onUpdate={applyUpdate} initialError={uploadError} />
+              <UploadPanel demo={demo} onDone={show} onUpdate={applyUpdate} initialError={uploadError} initialFile={carriedFile} />
             )}
           </motion.div>
         )}

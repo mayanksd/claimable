@@ -117,3 +117,14 @@ export function perkDescription(p: Perk): string {
   if (!cleaned) return p.oneLiner.trim();
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
+
+/**
+ * Which hero the dashboard shows:
+ * - "wording": general policy wording only (no schedule) → honest card, no ₹, no reveal.
+ * - "count": no ₹ total for another reason → "You've got N perks…" (never a ₹0 hero).
+ * - "value": the ₹ hero.
+ */
+export function heroMode(e: Pick<Extraction, "isScheduleIncluded" | "perks" | "policy">): "wording" | "count" | "value" {
+  if (e.isScheduleIncluded === false) return "wording";
+  return computeHeroValue(e).annualPerksValueInr > 0 ? "value" : "count";
+}

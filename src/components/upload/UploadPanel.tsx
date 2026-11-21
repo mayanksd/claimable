@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,9 +32,11 @@ type Props = {
   onUpdate: (u: UpdateEvent) => void;
   /** Shown on arrival, e.g. "This looks like pet insurance…" found after the dashboard opened. */
   initialError?: string | null;
+  /** A PDF chosen elsewhere (wording-only card) to start with. */
+  initialFile?: File | null;
 };
 
-export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Props) {
+export function UploadPanel({ demo, onDone, onUpdate, initialError = null, initialFile = null }: Props) {
   const [policy, setPolicy] = useState<File | null>(null);
   const [screens, setScreens] = useState<File[]>([]);
   const [sample, setSample] = useState(false);
@@ -47,6 +49,14 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
   const policyInput = useRef<HTMLInputElement>(null);
   const screensInput = useRef<HTMLInputElement>(null);
   const [showScreens, setShowScreens] = useState(false);
+  // Run the carried file through the same checks as a picked one (size, type).
+  const carried = useRef(false);
+  useEffect(() => {
+    if (initialFile && !carried.current) {
+      carried.current = true;
+      void addFiles([initialFile]);
+    }
+  }, [initialFile]);
 
   async function addFiles(list: File[], fromSample = false) {
     setError(null);
