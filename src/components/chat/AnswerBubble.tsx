@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import { parseAnswer, VERDICTS, type Verdict } from "@/lib/answer";
 import { cn } from "@/lib/utils";
+import { ErrorText } from "@/components/ErrorDetail";
 
 const PILL: Record<Verdict, string> = {
   COVERED: "bg-good-soft text-good",
@@ -34,14 +35,14 @@ export function AnswerBubble({ text, streaming = false }: { text: string; stream
   return (
     <div className={bubble}>
       {verdict && (
-        <span className={cn("mb-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-extrabold", PILL[verdict])}>
+        <span className={cn("mb-1.5 inline-block rounded-full px-2 py-0.5 text-xs font-bold", PILL[verdict])}>
           {verdict}
         </span>
       )}
       <div className="[&_li]:ml-4 [&_li]:list-disc [&_p]:my-0.5 [&_strong]:font-bold [&_ul]:my-1">
         <ReactMarkdown>{body}</ReactMarkdown>
       </div>
-      {source && <div className="mt-1.5 text-[11px] text-muted-foreground">{source}</div>}
+      {source && <div className="mt-1.5 text-xs text-muted-foreground">{source}</div>}
     </div>
   );
 }
@@ -57,7 +58,7 @@ export function QuestionBubble({ text }: { text: string }) {
 export function ErrorBubble({ text }: { text: string }) {
   return (
     <div role="alert" className={cn(bubble, "border-bad/30 bg-bad-soft text-bad")}>
-      {text}
+      <ErrorText text={text} />
     </div>
   );
 }

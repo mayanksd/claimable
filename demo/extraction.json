@@ -1,11 +1,14 @@
 {
+  "documentType": "retail_health",
+  "isScheduleIncluded": true,
   "policy": {
     "insurer": "Aarogya General Insurance (fictional)",
     "product": "Aarogya Shield Premier",
     "sumInsuredInr": 1000000,
     "tenureYears": 3,
     "annualPremiumInr": 12800,
-    "periodLabel": "1 Jan 2026 – 31 Dec 2028"
+    "periodLabel": "1 Jan 2026 – 31 Dec 2028",
+    "startDate": "2026-01-01"
   },
   "perks": [
     {
@@ -223,6 +226,114 @@
       "gap": 329
     },
     "programmeNote": "Average 8,000 steps a day over the policy year for 10% off your renewal premium (page 3)."
+  },
+  "moneyBack": [
+    {
+      "emoji": "👟",
+      "title": "Walk 8,000 steps a day → 10% off renewal",
+      "detail": "Average 8,000 steps a day across the policy year.",
+      "sourcePage": 3
+    },
+    {
+      "emoji": "🪙",
+      "title": "Steps above 3,000 a day → StepUp coins",
+      "detail": "1 coin per 10 extra steps; spend them in the app's rewards store.",
+      "sourcePage": 3
+    }
+  ],
+  "optionalCovers": [],
+  "family": {
+    "items": [
+      {
+        "id": "maternity",
+        "emoji": "🤰",
+        "title": "Maternity & delivery",
+        "detail": "Not covered: maternity expenses are excluded.",
+        "status": "not_covered",
+        "coveredFrom": null,
+        "sourcePage": 2
+      },
+      {
+        "id": "newborn",
+        "emoji": "👶",
+        "title": "Newborn cover",
+        "detail": "Newborn expenses are excluded.",
+        "status": "not_covered",
+        "coveredFrom": null,
+        "sourcePage": 4
+      }
+    ],
+    "notMentioned": [
+      "Vaccinations",
+      "IVF / infertility"
+    ]
+  },
+  "lifestyle": {
+    "items": [
+      {
+        "id": "programmes",
+        "emoji": "🥗",
+        "title": "Diet, weight & stress programmes",
+        "detail": "Free in the Aarogya app.",
+        "status": "covered",
+        "coveredFrom": null,
+        "sourcePage": 3
+      },
+      {
+        "id": "opd-care",
+        "emoji": "🩺",
+        "title": "Doctor visits & tests for BP, sugar, thyroid",
+        "detail": "Part of OPD: up to ₹5,000 a year, as reimbursement.",
+        "status": "covered",
+        "coveredFrom": null,
+        "sourcePage": 2
+      },
+      {
+        "id": "teleconsult",
+        "emoji": "📞",
+        "title": "Regular follow-ups with a doctor",
+        "detail": "Unlimited teleconsults, 24×7 in the app.",
+        "status": "covered",
+        "coveredFrom": null,
+        "sourcePage": 2
+      },
+      {
+        "id": "gym",
+        "emoji": "🏋️",
+        "title": "Gym discount",
+        "detail": "Up to 20% off at partner gyms.",
+        "status": "covered",
+        "coveredFrom": null,
+        "sourcePage": 3
+      },
+      {
+        "id": "ped",
+        "emoji": "⏳",
+        "title": "Conditions you had before buying (e.g. diabetes, BP)",
+        "detail": "Hospital cover for them starts after a 36-month wait.",
+        "status": "waiting",
+        "coveredFrom": "1 Jan 2029",
+        "sourcePage": 4
+      },
+      {
+        "id": "bariatric",
+        "emoji": "⚖️",
+        "title": "Weight-loss (bariatric) surgery",
+        "detail": "After a 36-month wait, if BMI is 40 or more.",
+        "status": "waiting",
+        "coveredFrom": "1 Jan 2029",
+        "sourcePage": 4
+      }
+    ],
+    "notMentioned": [
+      "Mental health",
+      "Fatty liver"
+    ]
+  },
+  "checkupFrequency": {
+    "label": "Once every policy year",
+    "everyYear": true,
+    "sourcePage": 2
   },
   "redFlags": [
     {

@@ -11,8 +11,24 @@ Fill the JSON schema exactly. Rules:
    - `good_to_know`: occasional (hearing aid, second opinion, restore, daily cash).
    - `emergency`: air ambulance, emergency helpline.
 4. `useItOrLoseIt` = true only if the limit is stated "per policy year" (or "per year") and is monetary.
-5. `heroValue.annualPerksValueInr` = sum of `capInr` of perks with `useItOrLoseIt = true`. `ratioToPremium` = that / `policy.annualPremiumInr`, one decimal. `annualPremiumInr` = gross premium / tenure years.
-6. Red flags = limits that surprise people at claim time: room-rent caps with proportionate deduction, co-pay, low ambulance cap, sub-limits, reimbursement-only benefits, long waiting periods, "per policy" limits that apply once per tenure, exclusions of common needs. `high` if it can cut a whole claim (co-pay, proportionate deduction); else `medium`. Max 5, most costly first.
+5. `heroValue.annualPerksValueInr` = sum of `capInr` of every `use_now` perk with `frequency = per_year` and a rupee cap (the app recomputes this; limits stated "per policy" for the whole tenure are not yearly). `ratioToPremium` = that / `policy.annualPremiumInr`, one decimal. `annualPremiumInr` = gross premium / tenure years. If the document has no premium (e.g. policy wording without the schedule), set `annualPremiumInr` and `ratioToPremium` to 0.
+6. Red flags = limits that surprise people at claim time, in plain words. Look for:
+   - room-rent caps and the proportionate-deduction rule (a pricier room cuts the WHOLE claim)
+   - co-pay of any kind: zone, non-network hospital, age-based
+   - low ambulance caps, sub-limits, reimbursement-only benefits
+   - waiting periods (initial, specified illnesses, pre-existing diseases, specific benefits)
+   - "per policy" limits that apply once per tenure rather than per year
+   - check-up frequency that is less than yearly (e.g. only after every 3 claim-free years)
+   - exclusions of common needs
+   `high` if it can cut a whole claim (co-pay, proportionate deduction); else `medium`. Max 6, most costly first.
 7. Rewards (only if a screenshot is given): read the coin balance and each item's coin price; `available` = false if the item looks greyed out. `redeemableNow` = available items with coins <= balance. `nextItem` = the cheapest available item above the balance, with `gap`. `programmeNote` = any rule from the policy text about steps or renewal discounts, with its page.
-8. `ambiguities`: wording a normal person could read two ways, with one short question to ask the insurer.
-9. Plain English, Indian rupees, no jargon. One-liners max 15 words. Never give medical or buying advice.
+8. `moneyBack`: ways the holder earns money back, as action → reward: step or wellness reward coins, renewal or no-claim premium discounts, cashback. E.g. "Walk 8,000 steps a day → 10% off renewal". Empty if none. Do not repeat these as perks.
+9. `documentType`: `retail_health` (individual / family health policy), `group_health` (employer or group policy), `motor` (car / bike), `life` (life or term insurance), `pet`, `surrogacy`, `other` (any other kind of insurance), or `not_insurance` (not an insurance document at all, e.g. a bill, CV or bank statement). If it isn't a health policy, fill only what you can and leave lists empty.
+10. `isScheduleIncluded`: true only if the document has the policy schedule (holder, sum insured, premium, policy period). False for general policy wording only. `policy.startDate` = the policy start date as YYYY-MM-DD, or an empty string if it isn't in the document.
+11. `optionalCovers`: add-on covers that apply only if the holder bought them (e.g. "optional cover", "add-on", "available on payment of additional premium") and the schedule doesn't confirm them. Don't repeat them in `perks`. Empty if none.
+12. `family` (Planning a family): maternity, normal delivery / C-section limits, newborn cover, vaccinations, IVF / infertility, and their waiting periods. `lifestyle` (Health glow-up: lifestyle care): diabetes, BP, cholesterol, thyroid, weight / obesity incl. bariatric surgery, fatty liver, mental health, chronic-care or diet / weight / stress programmes, wellness coaching, plus the pre-existing-disease wait for such conditions.
+    - Each item: `status` covered / partly / waiting / not_covered. If a waiting period applies, status `waiting` and `coveredFrom` = policy start date + the wait, written like "1 Jan 2029"; otherwise `coveredFrom` is an empty string.
+    - State exclusions plainly (e.g. maternity `not_covered`). Put checklist topics the policy never mentions in `notMentioned`.
+13. `checkupFrequency`: how often the free health check-up can be used, e.g. "Once every policy year" (`everyYear` true) or "Every 3 claim-free years" (`everyYear` false). If there's no check-up: `label` empty string, `everyYear` false, `sourcePage` 0.
+14. `ambiguities`: wording a normal person could read two ways, with one short question to ask the insurer.
+15. Plain English, Indian rupees, no jargon, upbeat where honest. One-liners max 15 words: say what the perk covers and how to use it, without repeating the ₹ amount (it is shown separately). Never give medical or buying advice.

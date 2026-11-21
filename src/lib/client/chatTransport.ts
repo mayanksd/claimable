@@ -39,9 +39,9 @@ export function chatErrorMessage(err: Error | undefined): string {
     const j = JSON.parse(err.message) as { error?: string };
     if (j.error) return j.error;
   } catch {}
-  return /fetch|network/i.test(err.message)
-    ? "Couldn't reach the server. Check your connection and try again."
-    : "Sorry, something went wrong. Please try again.";
+  if (/failed to fetch|network|load failed/i.test(err.message)) return "Couldn't reach the server. Check your connection and try again.";
+  // Errors inside the stream carry the server's own (already friendly) text from /api/chat onError.
+  return err.message.trim() || "Sorry, something went wrong. Please try again.";
 }
 
 export function createChatTransport(opts: {

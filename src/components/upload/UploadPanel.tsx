@@ -1,13 +1,16 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, FileText, Loader2, Smartphone, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AnalysisResult } from "@/lib/analysis";
+import { isWrongDocumentMessage, type AnalysisResult, type AnalyzeEvent } from "@/lib/analysis";
 import { compressImage } from "@/lib/client/compress";
 import { runAnalysis } from "@/lib/client/analyze";
-import { LIMIT_HINT, MAX_PDF_BYTES, MAX_SCREENS, MAX_UPLOAD_BYTES, fileSize, mb, pdfTooBigMessage } from "@/lib/limits";
+import { MAX_PDF_BYTES, MAX_PDF_LABEL, MAX_SCREENS, MAX_UPLOAD_BYTES, fileSize, mb, pdfTooBigMessage } from "@/lib/limits";
 import { cn } from "@/lib/utils";
+import { ErrorText } from "@/components/ErrorDetail";
+import { FunFact, LoadingHeadline } from "./LoadingCopy";
 
 type StepState = "todo" | "run" | "done";
 type Progress = {
@@ -18,20 +21,32 @@ type Progress = {
 
 const IDLE: Progress = { read: { state: "todo" }, masked: { state: "todo" }, perks: { state: "todo" } };
 const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
-// "Policy number" → "policy number", but keep acronyms like PAN.
-const kindLabel = (k: string) => (k === k.toUpperCase() ? k : k.toLowerCase());
 const isPdf = (f: File) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
 
-export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: AnalysisResult) => void }) {
+type UpdateEvent = Extract<AnalyzeEvent, { type: "update" }>;
+
+type Props = {
+  demo: boolean;
+  onDone: (r: AnalysisResult) => void;
+  /** Part B arrived after the dashboard opened. */
+  onUpdate: (u: UpdateEvent) => void;
+  /** Shown on arrival, e.g. "This looks like pet insurance…" found after the dashboard opened. */
+  initialError?: string | null;
+};
+
+export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Props) {
   const [policy, setPolicy] = useState<File | null>(null);
   const [screens, setScreens] = useState<File[]>([]);
   const [sample, setSample] = useState(false);
   const [busy, setBusy] = useState<"adding" | "analyzing" | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
+  const heldUpdate = useRef<((u: UpdateEvent) => boolean) | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
   const [progress, setProgress] = useState<Progress>(IDLE);
-  const input = useRef<HTMLInputElement>(null);
+  const policyInput = useRef<HTMLInputElement>(null);
+  const screensInput = useRef<HTMLInputElement>(null);
+  const [showScreens, setShowScreens] = useState(false);
 
   async function addFiles(list: File[], fromSample = false) {
     setError(null);
@@ -109,12 +124,39 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
           break;
         case "done": {
           const x = e.result.extraction;
-          setProgress((p) => ({ ...p, perks: { state: "done", perks: x.perks.length, flags: x.redFlags.length } }));
-          setTimeout(() => onDone({ ...e.result, sample: e.result.sample || sample }), 600);
+          // Red flags come with part B; while it's pending, only count perks.
+          setProgress((p) => ({
+            ...p,
+            perks: { state: "done", perks: x.perks.length, flags: e.result.pending ? undefined : x.redFlags.length },
+          }));
+          // Hold the result for the short "Done!" beat; an update arriving meanwhile is merged in.
+          let result: AnalysisResult | null = { ...e.result, sample: e.result.sample || sample };
+          heldUpdate.current = (u) => {
+            if (!result) return false;
+            if (u.notHealth) {
+              result = null;
+              setPolicy(null);
+              setError(u.notHealth);
+              setProgress(IDLE);
+              setBusy(null);
+              return true;
+            }
+            result = u.extraction ? { ...result, extraction: u.extraction, pending: false } : { ...result, pending: false, partBFailed: true };
+            return true;
+          };
+          setTimeout(() => {
+            heldUpdate.current = null;
+            if (result) onDone(result);
+          }, 600);
           break;
         }
+        case "update":
+          if (!heldUpdate.current?.(e)) onUpdate(e);
+          break;
         case "error":
-          setError(e.message);
+          // The wrong document: drop it so the main button offers a fresh upload.
+          if (isWrongDocumentMessage(e.message)) setPolicy(null);
+          setError(e.detail ? `${e.message}\n\nDetails: ${e.detail}` : e.message);
           setProgress(IDLE);
           setBusy(null);
           break;
@@ -123,182 +165,279 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
   }
 
   const analyzing = busy === "analyzing";
+
+
   const { read, masked, perks } = progress;
 
-  return (
-    <div className="mx-auto my-10 max-w-[720px] px-5 text-center sm:my-14">
-      <h1 className="mb-3 text-[32px] leading-[1.1] font-extrabold tracking-tight sm:text-[40px]">
-        You paid for perks.
-        <br />
-        <span className="bg-gradient-to-r from-brand to-brand-2 bg-clip-text text-transparent">Start using them.</span>
-      </h1>
-      <p className="mb-7 text-[17px] text-muted-foreground">
-        Upload your health policy and your insurer app&apos;s rewards screen. See what you&apos;re owed in 20 seconds.
-      </p>
+  const pickPolicy = () => policyInput.current?.click();
+  const tryAnother = () => {
+    setError(null);
+    setPolicy(null);
+    pickPolicy();
+  };
+  const screensOpen = showScreens || screens.length > 0;
 
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label="Add your policy PDF and screenshots"
-        onClick={() => !analyzing && input.current?.click()}
-        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && !analyzing && input.current?.click()}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDrag(true);
-        }}
-        onDragLeave={() => setDrag(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDrag(false);
-          if (!analyzing) void addFiles([...e.dataTransfer.files]);
-        }}
-        className={cn(
-          "grid cursor-pointer grid-cols-[minmax(0,1fr)] gap-3.5 rounded-[20px] border-2 border-dashed border-brand-line bg-brand-soft p-6 transition-colors sm:p-9",
-          drag && "border-brand bg-brand-line/40",
-          analyzing && "cursor-default opacity-80",
-        )}
-      >
-        <input
-          ref={input}
-          type="file"
-          multiple
-          hidden
-          accept="application/pdf,.pdf,image/*"
-          onChange={(e) => {
-            void addFiles([...(e.target.files ?? [])]);
-            e.target.value = "";
-          }}
-        />
-        {policy ? (
-          <FileRow
-            icon={<FileText className="size-5 text-brand" />}
-            name={policy.name}
-            meta={`PDF · ${fileSize(policy.size)}`}
-            onRemove={analyzing ? undefined : () => setPolicy(null)}
-          />
+  return (
+    <div className="mx-auto my-8 w-full max-w-[640px] px-5 text-center sm:my-12">
+      <AnimatePresence mode="wait" initial={false}>
+        {!analyzing ? (
+          <motion.div key="upload" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.3 }}>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-white/80 px-3.5 py-1.5 text-sm font-semibold text-brand shadow-sm">
+              <span aria-hidden>🩺</span> Health insurance perk finder
+            </span>
+            <h1 className="mt-4 text-[34px] leading-[1.08] font-extrabold tracking-tight text-balance sm:text-[48px]">
+              Your health insurance has perks.
+              <br />
+              <span className="bg-gradient-to-r from-brand via-brand-2 to-warm bg-clip-text text-transparent">Start using them.</span>
+            </h1>
+            <p className="mt-3 text-xl font-medium text-muted-foreground">Discover the perks you&apos;re already paying for.</p>
+
+            <ul className="mx-auto mt-7 mb-7 grid max-w-[520px] gap-3 text-left text-base">
+              <li className="flex items-center gap-3.5">
+                <EmojiCircle emoji="🩺" tone="bg-warm-soft" size="lg" />
+                <span>
+                  Only <b>1 in 10</b> people use their free health check-up.
+                </span>
+              </li>
+              <li className="flex items-center gap-3.5">
+                <EmojiCircle emoji="🔍" tone="bg-brand-soft" size="lg" />
+                <span>Most policies hide OPD, dental, wellness rewards and discounts in the fine print.</span>
+              </li>
+            </ul>
+
+            {/* The whole card is a drop target; the button opens the picker. */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDrag(true);
+              }}
+              onDragLeave={() => setDrag(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDrag(false);
+                void addFiles([...e.dataTransfer.files]);
+              }}
+              className={cn(
+                "grid grid-cols-[minmax(0,1fr)] gap-3 rounded-3xl border-2 border-dashed border-brand-line bg-white/75 p-5 shadow-soft backdrop-blur transition-colors sm:p-7",
+                drag && "border-brand bg-brand-soft",
+              )}
+            >
+              <input
+                ref={policyInput}
+                type="file"
+                hidden
+                accept="application/pdf,.pdf"
+                onChange={(e) => {
+                  void addFiles([...(e.target.files ?? [])]);
+                  e.target.value = "";
+                }}
+              />
+              <input
+                ref={screensInput}
+                type="file"
+                multiple
+                hidden
+                accept="image/*"
+                onChange={(e) => {
+                  void addFiles([...(e.target.files ?? [])]);
+                  e.target.value = "";
+                }}
+              />
+              {policy && <FileRow emoji="📄" name={policy.name} meta={`PDF · ${fileSize(policy.size)}`} onRemove={() => setPolicy(null)} />}
+
+              {error && isWrongDocumentMessage(error) ? (
+                // Not a health policy / scanned: a friendly nudge, not a red error.
+                <div role="alert" className="flex flex-col items-center gap-3 rounded-2xl border border-warm-line bg-warm-soft px-4 py-4">
+                  <p className="text-base font-semibold text-foreground">{error}</p>
+                  <Button variant="outline" onClick={tryAnother}>
+                    Try another PDF
+                  </Button>
+                </div>
+              ) : (
+                error && (
+                  <div role="alert" className="rounded-2xl border border-bad/30 bg-bad-soft px-4 py-3 text-left text-sm font-medium text-bad">
+                    <ErrorText text={error} />
+                  </div>
+                )
+              )}
+              {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
+
+              <Button
+                variant="hero"
+                size="lg"
+                className="h-14 w-full rounded-2xl text-xl sm:w-auto sm:justify-self-center sm:px-10"
+                disabled={!!busy}
+                onClick={policy ? analyze : pickPolicy}
+              >
+                {policy ? "Find my hidden perks ✨" : "Upload policy PDF →"}
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                {busy === "adding" ? "Preparing screenshots…" : `Or drop your PDF here · up to ${MAX_PDF_LABEL}`}
+              </p>
+
+              {screensOpen ? (
+                <div className="grid gap-2.5 text-left">
+                  <p className="text-sm font-semibold text-muted-foreground">Insurance app screenshots (optional) · home or rewards page</p>
+                  {screens.map((sc, i) => (
+                    <FileRow
+                      key={`${sc.name}-${i}`}
+                      emoji="📱"
+                      name={sc.name}
+                      meta={`image · ${fileSize(sc.size)}`}
+                      onRemove={() => setScreens((xs) => xs.filter((_, j) => j !== i))}
+                    />
+                  ))}
+                  {screens.length < MAX_SCREENS && (
+                    <button type="button" onClick={() => screensInput.current?.click()} className="cursor-pointer text-left">
+                      <SlotRow emoji="📱" label={screens.length ? "Add another screenshot" : "Choose screenshots"} hint={`up to ${MAX_SCREENS}`} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowScreens(true)}
+                  className="min-h-11 cursor-pointer justify-self-center rounded-lg px-2 text-sm font-semibold text-brand hover:underline"
+                >
+                  + Add insurance app screenshots (optional)
+                </button>
+              )}
+
+              <Button variant="ghost" size="lg" className="justify-self-center" onClick={loadSample} disabled={!!busy}>
+                ✨ Try with a sample policy
+              </Button>
+            </div>
+
+            <p className="mx-auto mt-5 max-w-[520px] text-xs text-muted-foreground italic">
+              🔒 We mask your name, PAN, phone, email, address and policy number before AI reads anything. Files are never
+              stored. Crop names out of screenshots.
+            </p>
+          </motion.div>
         ) : (
-          <SlotRow icon={<FileText className="size-5" />} label="Your policy PDF" hint="required" />
+          <motion.div
+            key="progress"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.3 }}
+            className="mx-auto mt-6 w-full max-w-[640px]"
+          >
+            <div className="rounded-3xl border border-border/70 bg-white/80 p-6 text-left shadow-soft backdrop-blur sm:p-8">
+            <div className="mb-5">
+              <LoadingHeadline />
+              {/* Indeterminate: it shows activity, never a fake percentage. */}
+              <div className="loading-track mt-4" role="progressbar" aria-label="Reading your policy" aria-busy="true">
+                <span />
+              </div>
+            </div>
+            <div className="grid gap-3" aria-live="polite">
+              <AnimatePresence initial={false}>
+                {read.state !== "todo" && (
+                  <Step key="read" state={read.state}>
+                    {read.state === "done"
+                      ? `Read ${plural(read.pages ?? 0, "page")}${read.screens ? ` and ${plural(read.screens, "screenshot")}` : ""}`
+                      : "Reading your policy…"}
+                  </Step>
+                )}
+                {masked.state !== "todo" && (
+                  <Step key="masked" state={masked.state}>
+                    {masked.state === "done"
+                      ? `Masked ${plural(masked.count ?? 0, "personal detail")} for privacy`
+                      : "Masking personal details…"}
+                  </Step>
+                )}
+                {perks.state !== "todo" && (
+                  <Step key="perks" state={perks.state}>
+                    {perks.state === "done"
+                      ? `Found ${plural(perks.perks ?? 0, "perk")}${perks.flags === undefined ? "" : ` and ${plural(perks.flags, "red flag")}`}`
+                      : "Finding perks, limits and red flags…"}
+                  </Step>
+                )}
+                {perks.state === "done" && (
+                  <Step key="done" state="done">
+                    <b>Done! Opening your perks 🎉</b>
+                  </Step>
+                )}
+              </AnimatePresence>
+            </div>
+            </div>
+            <FunFact />
+          </motion.div>
         )}
-        {screens.length > 0 && (
-          <div className="-mb-1.5 text-left text-xs font-semibold text-muted-foreground">Optional: app rewards screenshot</div>
-        )}
-        {screens.map((s, i) => (
-          <FileRow
-            key={`${s.name}-${i}`}
-            icon={<Smartphone className="size-5 text-brand" />}
-            name={s.name}
-            meta={`image · ${fileSize(s.size)}`}
-            onRemove={analyzing ? undefined : () => setScreens((xs) => xs.filter((_, j) => j !== i))}
-          />
-        ))}
-        {!screens.length && (
-          <SlotRow
-            icon={<Smartphone className="size-5" />}
-            label="Optional: app rewards screenshot"
-            hint="step coins / rewards store"
-          />
-        )}
-        <div className="text-[13px] text-muted-foreground">
-          {busy === "adding" ? (
-            "Preparing screenshots…"
-          ) : (
-            <>
-              <b className="text-brand">Drop files here or click to choose</b> · up to {MAX_SCREENS} screenshots · nothing is
-              stored
-            </>
-          )}
-        </div>
-      </div>
-
-      <p className="mt-2.5 text-xs font-medium text-muted-foreground">{LIMIT_HINT}</p>
-      {notice && <p className="mt-3 text-sm text-muted-foreground">{notice}</p>}
-      {error && (
-        <div role="alert" className="mt-4 rounded-xl border border-bad/30 bg-bad-soft px-4 py-3 text-left text-sm font-medium text-bad">
-          {error}
-        </div>
-      )}
-
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-        <Button variant="brand" size="lg" disabled={(!policy && !demo) || !!busy} onClick={analyze}>
-          {analyzing ? <Loader2 className="animate-spin" /> : null}
-          Find my perks →
-        </Button>
-        {!analyzing && (
-          <Button variant="outline" size="lg" onClick={loadSample} disabled={!!busy}>
-            Try with sample policy
-          </Button>
-        )}
-      </div>
-      {!policy && !analyzing && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          The sample is a fictional Aarogya policy. {demo && "Demo mode: no files are sent anywhere."}
-        </p>
-      )}
-
-      {analyzing && (
-        <div className="mx-auto mt-7 grid max-w-[440px] gap-2.5 text-left" aria-live="polite">
-          <Step state={read.state}>
-            {read.state === "done"
-              ? `Read ${plural(read.pages ?? 0, "page")}${read.screens ? ` and ${plural(read.screens, "screenshot")}` : ""}`
-              : "Reading your policy…"}
-          </Step>
-          <Step state={masked.state}>
-            {masked.state === "done"
-              ? `Masked ${plural(masked.count ?? 0, "personal detail")}${masked.kinds?.length ? ` (${masked.kinds.slice(0, 5).map(kindLabel).join(", ")}…)` : ""}`
-              : "Masking personal details"}
-          </Step>
-          <Step state={perks.state}>
-            {perks.state === "done"
-              ? `Found ${plural(perks.perks ?? 0, "perk")} and ${plural(perks.flags ?? 0, "red flag")}`
-              : "Finding perks, limits and red flags…"}
-          </Step>
-          <Step state={perks.state === "done" ? "done" : "todo"}>Done</Step>
-        </div>
-      )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function SlotRow({ icon, label, hint }: { icon: React.ReactNode; label: string; hint: string }) {
+function EmojiCircle({ emoji, tone, size = "md" }: { emoji: string; tone: string; size?: "md" | "lg" }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-dashed border-brand-line bg-white/60 px-3.5 py-3 text-left text-muted-foreground">
-      {icon}
-      <span className="min-w-0 flex-1 truncate font-semibold">{label}</span>
-      <small className="shrink-0 text-xs">{hint}</small>
+    <span
+      aria-hidden
+      className={cn(
+        "grid shrink-0 place-items-center rounded-full leading-none",
+        size === "lg" ? "size-14 text-[44px] sm:size-16 sm:text-[56px]" : "size-12 text-[26px]",
+        tone,
+      )}
+    >
+      {emoji}
+    </span>
+  );
+}
+
+function SlotRow({ emoji, label, hint }: { emoji: string; label: string; hint: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-dashed border-brand-line bg-white/70 px-3 py-2.5 text-left text-muted-foreground">
+      <EmojiCircle emoji={emoji} tone="bg-brand-soft" />
+      <span className="min-w-0 flex-1 text-base font-semibold">{label}</span>
+      <small className="hidden shrink-0 text-xs sm:inline">{hint}</small>
     </div>
   );
 }
 
-function FileRow({ icon, name, meta, onRemove }: { icon: React.ReactNode; name: string; meta: string; onRemove?: () => void }) {
+function FileRow({ emoji, name, meta, onRemove }: { emoji: string; name: string; meta: string; onRemove?: () => void }) {
   return (
-    <div
-      className="flex items-center gap-3 rounded-xl border bg-white px-3.5 py-3 text-left"
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex items-center gap-3 rounded-2xl border border-good-line bg-white px-3 py-2.5 text-left shadow-sm"
       onClick={(e) => e.stopPropagation()}
     >
-      {icon}
-      <b className="min-w-0 flex-1 truncate">{name}</b>
+      <EmojiCircle emoji={emoji} tone="bg-good-soft" />
+      <b className="min-w-0 flex-1 break-all sm:truncate sm:break-normal">{name}</b>
       <small className="shrink-0 font-semibold whitespace-nowrap text-good">{meta} ✓</small>
       {onRemove && (
-        <button type="button" onClick={onRemove} aria-label={`Remove ${name}`} className="rounded p-1 text-muted-foreground hover:bg-secondary">
+        <button type="button" onClick={onRemove} aria-label={`Remove ${name}`} className="grid shrink-0 place-items-center rounded-full p-1.5 text-muted-foreground hover:bg-secondary max-sm:size-11">
           <X className="size-4" />
         </button>
       )}
-    </div>
+    </motion.div>
   );
 }
 
 function Step({ state, children }: { state: StepState; children: React.ReactNode }) {
   return (
-    <div className={cn("flex items-center gap-2.5", state === "todo" ? "text-muted-foreground/60" : state === "run" ? "text-muted-foreground" : "text-foreground")}>
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3 }}
+      className={cn("flex items-center gap-3 text-base", state === "run" ? "text-muted-foreground" : "text-foreground")}
+    >
       <span
         className={cn(
-          "grid size-5 shrink-0 place-items-center rounded-full text-xs text-white",
-          state === "done" ? "bg-good" : state === "run" ? "bg-brand" : "bg-border",
+          "grid size-7 shrink-0 place-items-center rounded-full text-white transition-colors",
+          state === "done" ? "bg-good" : "bg-brand",
         )}
       >
-        {state === "done" ? <Check className="size-3" strokeWidth={3} /> : state === "run" ? <Loader2 className="size-3 animate-spin" /> : null}
+        {state === "done" ? (
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 18 }}>
+            <Check className="size-4" strokeWidth={3} />
+          </motion.span>
+        ) : (
+          <Loader2 className="size-4 animate-spin" />
+        )}
       </span>
-      {children}
-    </div>
+      <span>{children}</span>
+    </motion.div>
   );
 }

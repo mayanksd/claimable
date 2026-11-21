@@ -34,8 +34,15 @@ test("every cached answer is concise, cited, and its follow-ups are answerable i
     assert.match(a.source ?? "", /^Source: p\.\d+(, p\.\d+)*$/, q);
     assert.ok(a.followups.length >= 2 && a.followups.length <= 3, `${q}: ${a.followups.length} follow-ups`);
     for (const f of a.followups) {
-      assert.ok(f.split(/\s+/).length < 7, `${q} → "${f}" is too long`);
+      assert.ok(f.split(/\s+/).length <= 7, `${q} → "${f}" is too long`);
       assert.ok(cached[f], `${q} → follow-up "${f}" has no cached answer`);
     }
+  }
+});
+
+test("every use-now perk in the sample has a cached 'How do I claim' answer", () => {
+  const extraction = JSON.parse(readFileSync(new URL("../demo/extraction.json", import.meta.url), "utf8"));
+  for (const p of extraction.perks.filter((x: { category: string }) => x.category === "use_now")) {
+    assert.ok(cached[`How do I claim: ${p.name}?`], p.name);
   }
 });

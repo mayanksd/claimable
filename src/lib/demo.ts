@@ -9,5 +9,6 @@ export const demoExtraction: Extraction = ExtractionSchema.parse(extractionJson)
 /** Redacted text of demo/aarogya-policy.pdf (regenerate: OUT=demo/redacted-policy.json npm run check:redact). */
 export const demoRedactedText: string = redactedPolicy.text;
 export const demoRedactions = { count: redactedPolicy.count, kinds: redactedPolicy.kinds };
+export const demoFirstName: string | null = redactedPolicy.firstName;
 
 export const cachedAnswers: Record<string, string> = cachedAnswersJson;

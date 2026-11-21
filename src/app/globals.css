@@ -15,7 +15,7 @@
   --secondary: #f1f5f9;
   --secondary-foreground: #0f172a;
   --muted: #f8fafc;
-  --muted-foreground: #64748b;
+  --muted-foreground: #526075;
   --accent: #eef2ff;
   --accent-foreground: #4f46e5;
   --destructive: #dc2626;
@@ -27,15 +27,22 @@
   --brand-2: #7c3aed;
   --brand-soft: #eef2ff;
   --brand-line: #c7d2fe;
-  --good: #059669;
+  --good: #047857;
   --good-soft: #ecfdf5;
   --good-line: #a7f3d0;
   --good-ink: #065f46;
-  --warn: #d97706;
+  --warn: #b45309;
   --warn-soft: #fffbeb;
   --warn-line: #fde68a;
-  --bad: #dc2626;
+  --bad: #b91c1c;
   --bad-soft: #fef2f2;
+
+  /* Warm accent for wins and CTAs */
+  --warm: #e4572e;
+  --warm-2: #d9366a;
+  --warm-soft: #fff1eb;
+  --warm-line: #ffd2c2;
+  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 30px -14px rgb(79 70 229 / 0.25);
 }
 
 @theme inline {
@@ -71,8 +78,14 @@
   --color-warn-line: var(--warn-line);
   --color-bad: var(--bad);
   --color-bad-soft: var(--bad-soft);
+  --color-warm: var(--warm);
+  --color-warm-2: var(--warm-2);
+  --color-warm-soft: var(--warm-soft);
+  --color-warm-line: var(--warm-line);
+  --shadow-soft: var(--shadow-soft);
 
-  --font-sans: var(--font-inter), -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bricolage Grotesque", "Plus Jakarta Sans", -apple-system, sans-serif;
   --radius-sm: calc(var(--radius) - 8px);
   --radius-md: calc(var(--radius) - 6px);
   --radius-lg: calc(var(--radius) - 4px);
@@ -86,4 +99,46 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+}
+
+/* Slim indeterminate progress bar for the loading card (no fake percentages). */
+.loading-track {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--brand-soft);
+}
+.loading-track > span {
+  position: absolute;
+  inset-block: 0;
+  width: 40%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--brand), var(--brand-2), var(--warm));
+  animation: loading-slide 1.4s ease-in-out infinite;
+}
+@keyframes loading-slide {
+  from { left: -40%; }
+  to { left: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-track > span {
+    animation: none;
+    left: 0;
+    width: 100%;
+    opacity: 0.6;
+  }
+}
+
+/* Unselected star tab: white pill with a thin gradient border (no fill, no glow). */
+.star-outline {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(90deg, var(--brand), var(--brand-2), var(--warm)) border-box;
 }
