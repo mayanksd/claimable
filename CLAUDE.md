@@ -30,7 +30,7 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - `POST /api/analyze` (multipart: `policy` PDF, `screens[]` images)
   1. `unpdf` → text per page, prefix each page with `[[PAGE n]]`
   2. `redact(text)` → `{ text, count, kinds }`
-  3. `generateText({ model, system: buildExtractionSystem(extractPrompt), messages, maxOutputTokens: 16000 })` → `parseExtraction(text)` (strip fences, outermost `{…}`, trailing-comma repair, defaults for missing fields, drop only broken list items, validate with `ExtractionModelSchema`) → `normalizeExtraction()` → `ExtractionSchema` shape. One retry with the validation issues if the answer is unusable and time remains.
+  3. `generateText({ model, system: buildExtractionSystem(extractPrompt), messages, maxOutputTokens: 16000 })` → `parseExtraction(text)` (strip fences, outermost `{…}`, trailing-comma repair, defaults for missing fields, drop only broken list items, validate with `ExtractionModelSchema`) → `normalizeExtraction()` → `ExtractionSchema` shape. One retry with the validation issues if the answer is unusable and at least 45 s of `maxDuration` (120 s) remain.
      **No structured outputs / strict tools for extraction:** the grammar for this schema is too large for the API to compile ("The compiled grammar is too large"). The JSON shape lives in the system prompt (`src/lib/extractionPrompt.ts`, a typed example + enum values generated from the schema).
   4. Return `{ extraction, redactedText, redactions: { count, kinds } }`
 - `POST /api/chat` → `streamText` with `system = chatPrompt + "\n\nEXTRACTION JSON:\n" + json + "\n\nPOLICY TEXT:\n" + redactedText`; return `toUIMessageStreamResponse()` (AI SDK v5).

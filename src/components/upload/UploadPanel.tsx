@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -125,6 +125,15 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
   }
 
   const analyzing = busy === "analyzing";
+
+  // Long policies can take a while: reassure after 20 s on the progress screen.
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    setSlow(false);
+    if (!analyzing) return;
+    const t = setTimeout(() => setSlow(true), 20_000);
+    return () => clearTimeout(t);
+  }, [analyzing]);
   const { read, masked, perks } = progress;
 
   return (
@@ -261,6 +270,19 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
               <div>
                 <h2 className="text-xl font-bold">Reading your policy…</h2>
                 <p className="text-sm text-muted-foreground">Hang tight, this takes about 20 seconds.</p>
+                <AnimatePresence>
+                  {slow && (
+                    <motion.p
+                      key="slow"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-1 text-sm font-semibold text-brand"
+                      role="status"
+                    >
+                      Long policy — reading carefully, up to a minute more…
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
             <div className="grid gap-3" aria-live="polite">

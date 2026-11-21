@@ -13,16 +13,18 @@ import { loadPrompt } from "@/lib/server/prompts";
 import { describeError, showErrorDetail, statusOf } from "@/lib/server/errors";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// Vercel Hobby with fluid compute allows up to 300 s; long policies can need two model calls.
+export const maxDuration = 120;
 
 /** Room for the full JSON (≈3–5k tokens) plus any thinking the model does first. */
 const MAX_OUTPUT_TOKENS = 16000;
-/** Only retry if the first attempt left enough of the 60 s budget for a second one. */
-const RETRY_IF_UNDER_MS = 28_000;
+/** Only retry if at least this much of the maxDuration budget is left for a second call. */
+const MIN_REMAINING_FOR_RETRY_MS = 45_000;
 
 const fail = (message: string, status: number) => Response.json({ error: message }, { status });
 
 export async function POST(req: Request) {
+  const deadline = Date.now() + maxDuration * 1000;
   const demo = process.env.DEMO_MODE === "1" || new URL(req.url).searchParams.get("demo") === "1";
   if (demo) return streamEvents(demoEvents);
 
@@ -85,7 +87,6 @@ export async function POST(req: Request) {
     );
     try {
       // Plain-text JSON, parsed and validated here. Structured outputs can't compile a grammar this size.
-      const started = Date.now();
       const system = buildExtractionSystem(loadPrompt("extract"));
       const messages: ModelMessage[] = [{ role: "user", content: [{ type: "text", text: redacted.text }, ...images] }];
       const ask = async () =>
@@ -93,8 +94,8 @@ export async function POST(req: Request) {
 
       let answer = await ask();
       let parsed = parseExtraction(answer);
-      // One retry with the problems spelled out, if there's still time inside maxDuration.
-      if (!parsed.ok && Date.now() - started < RETRY_IF_UNDER_MS) {
+      // One retry with the problems spelled out, only if at least 45 s of maxDuration remain.
+      if (!parsed.ok && deadline - Date.now() >= MIN_REMAINING_FOR_RETRY_MS) {
         console.warn(`[analyze] answer unusable, retrying once: ${parsed.issues.join("; ")}`);
         messages.push(
           { role: "assistant", content: answer },
