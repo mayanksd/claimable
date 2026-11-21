@@ -23,7 +23,8 @@ test("every cached check-up answer already offers the max chip", () => {
   const cached: Record<string, string> = JSON.parse(readFileSync(new URL("../demo/cached-answers.json", import.meta.url), "utf8"));
   for (const [q, text] of Object.entries(cached)) {
     const a = parseAnswer(text);
-    if (q === MAX_CHECKUP_CHIP || !/check-?\s?up/i.test(q + a.body)) continue;
+    // Same rule as the app: health check-ups only, not "dental check-ups".
+    if (q === MAX_CHECKUP_CHIP || !/(?<!(dental|eye|vision)\s)check-?\s?ups?\b/i.test(q + " " + a.body)) continue;
     assert.ok(a.followups.includes(MAX_CHECKUP_CHIP), q);
   }
 });

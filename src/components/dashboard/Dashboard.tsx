@@ -74,14 +74,19 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
           active={tab}
           onChange={setTab}
           tabs={[
-            { id: "perks", label: "Perks" },
-            { id: "family", label: "Planning a family?" },
-            { id: "lifestyle", label: "Lifestyle care" },
+            {
+              id: "perks",
+              label: "Perks 🎁",
+              star: true,
+              badge: <span className="rounded-full bg-white/25 px-2 py-0.5 text-xs font-bold">{e.perks.length} perks</span>,
+            },
+            { id: "family", label: "Planning a family? 👶" },
+            { id: "lifestyle", label: "Health glow-up ✨" },
             {
               id: "watch",
-              label: "Watch out",
+              label: "Watch out ⚠️",
               badge: pending ? (
-                <Loader2 className="size-3.5 animate-spin text-muted-foreground" aria-label="loading" />
+                <Loader2 className="size-4 animate-spin" aria-label="loading" />
               ) : flags.length ? (
                 // Amber on the tab; red is kept for the serious items inside it.
                 <span className="rounded-full border border-warn-line bg-warn-soft px-1.5 text-xs font-bold text-warn">
@@ -95,7 +100,6 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
         <div role="tabpanel" id={`panel-${tab}`} aria-label={tab}>
           {tab === "perks" && (
             <>
-              <ClaimedProgress claimed={claimedTotal(e, claimed)} total={e.heroValue.annualPerksValueInr} />
               <PerkGrid
                 perks={e.perks}
                 policyText={redactedText}
@@ -103,6 +107,7 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
                 onToggleClaimed={toggle}
                 checkupResetNote={resetNote}
               />
+              <ClaimedProgress claimed={claimedTotal(e, claimed)} total={e.heroValue.annualPerksValueInr} />
               <OptionalCovers covers={e.optionalCovers} />
               <MoneyBack moneyBack={e.moneyBack} rewards={e.rewards} />
             </>
@@ -126,7 +131,7 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
           {tab === "lifestyle" && !pending && !partBFailed && (
             <TopicTab
               section={e.lifestyle}
-              emptyText="Your policy doesn't mention lifestyle or chronic-care cover — ask your insurer."
+              emptyText="Your policy doesn't mention any health glow-up cover (chronic care, weight or wellness) — ask your insurer."
               intro={<p className="text-sm text-muted-foreground">Staying on top of everyday health? Here&apos;s what helps. 💪</p>}
             />
           )}

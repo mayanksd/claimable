@@ -39,3 +39,10 @@ test("every cached answer is concise, cited, and its follow-ups are answerable i
     }
   }
 });
+
+test("every use-now perk in the sample has a cached 'How do I claim' answer", () => {
+  const extraction = JSON.parse(readFileSync(new URL("../demo/extraction.json", import.meta.url), "utf8"));
+  for (const p of extraction.perks.filter((x: { category: string }) => x.category === "use_now")) {
+    assert.ok(cached[`How do I claim: ${p.name}?`], p.name);
+  }
+});

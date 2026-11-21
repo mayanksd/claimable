@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 const STARTER_EMOJI = ["🚨", "🦷", "🩺"];
 import { parseAnswer } from "@/lib/answer";
 import { chatErrorMessage, createChatTransport } from "@/lib/client/chatTransport";
+import { ASK_EVENT } from "@/lib/client/askChat";
 import { AnswerBubble, ErrorBubble, QuestionBubble, TypingBubble } from "./AnswerBubble";
 
 type Props = {
@@ -45,6 +46,27 @@ export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
     void sendMessage({ text });
   }
 
+  // "How do I claim this?" on a perk card: ask it here (or queue it in the box if an answer is streaming).
+  const askRef = useRef(ask);
+  askRef.current = ask;
+  const busyRef = useRef(busy);
+  busyRef.current = busy;
+  useEffect(() => {
+    const onAsk = (ev: Event) => {
+      const q = (ev as CustomEvent<string>).detail;
+      if (!q) return;
+      if (busyRef.current) {
+        setInput(q);
+        inputRef.current?.focus();
+      } else askRef.current(q);
+      if (window.matchMedia("(max-width: 1023px)").matches) {
+        document.getElementById("chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+    window.addEventListener(ASK_EVENT, onAsk);
+    return () => window.removeEventListener(ASK_EVENT, onAsk);
+  }, []);
+
   const last = messages[messages.length - 1];
   const textOf = (m: (typeof messages)[number]) => m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
 
@@ -63,7 +85,7 @@ export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
         })();
 
   return (
-    <Card id="chat" className="flex h-[600px] scroll-mt-20 flex-col overflow-hidden p-0 lg:sticky lg:top-[76px] lg:h-[calc(100vh-100px)]">
+    <Card id="chat" className="flex h-[600px] scroll-mt-20 flex-col overflow-hidden p-0 lg:sticky lg:top-[96px] lg:h-[min(680px,calc(100vh-120px))]">
       <header className="border-b px-[18px] py-4 font-bold">
         Talk to your policy
         <small className="block text-xs font-medium text-muted-foreground">Answers only from your documents, with the page</small>

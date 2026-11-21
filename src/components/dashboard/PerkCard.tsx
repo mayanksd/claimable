@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import type { Extraction } from "@/lib/schema";
 import { effortTag } from "@/lib/perks";
 import { inr } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { askChat, claimQuestion } from "@/lib/client/askChat";
 import { BASE_PACKAGE } from "@/data/test-prices";
 
 type Perk = Extraction["perks"][number];
@@ -20,11 +21,11 @@ const FREQ: Record<Perk["frequency"], string> = {
 
 type Props = {
   perk: Perk;
-  /** Optional cover: only applies if bought, so label it and skip the effort tag. */
+  /** Optional cover: only applies if bought, so label it and skip the actions. */
   optional?: boolean;
   claimed?: boolean;
   onToggleClaimed?: () => void;
-  /** Health check-up only. */
+  /** Health check-up only: its primary action is the planner. */
   onMaxCheckup?: () => void;
   maxOpen?: boolean;
   resetNote?: string | null;
@@ -39,7 +40,7 @@ export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxChecku
   return (
     <Card
       className={cn(
-        "relative flex w-full flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg motion-reduce:transform-none",
+        "relative flex h-full w-full flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg motion-reduce:transform-none",
         claimed && "border-good-line bg-good-soft/40",
       )}
     >
@@ -47,7 +48,7 @@ export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxChecku
         <div className="grid size-12 place-items-center rounded-full bg-warm-soft text-[26px] leading-none" aria-hidden>
           {perk.emoji}
         </div>
-        <Badge variant="outline">p.{perk.sourcePage}</Badge>
+        <span className="pt-1 text-xs text-muted-foreground">Pg {perk.sourcePage}</span>
       </div>
       {optional && (
         <Badge variant="warn" className="mt-2.5">
@@ -58,40 +59,50 @@ export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxChecku
       <div className="text-xl font-extrabold">
         {perk.capLabel} {freq && <small className="text-xs font-medium text-muted-foreground">{freq}</small>}
       </div>
-      <p className="mt-1.5 mb-2.5 text-sm text-muted-foreground">{perk.oneLiner}</p>
+      <p className="mt-1.5 text-sm text-muted-foreground">{perk.oneLiner}</p>
       {isCheckup && (
-        <p className="mb-2.5 rounded-lg bg-good-soft px-2.5 py-2 text-sm text-good-ink">
+        <p className="mt-2.5 rounded-lg bg-good-soft px-2.5 py-2 text-sm text-good-ink">
           A basic full-body check-up costs about {inr(BASE_PACKAGE.priceInr)}. You have {inr(perk.capInr!)} — use all of it.
         </p>
       )}
-      {isCheckup && resetNote && <p className="mb-2.5 text-xs font-semibold text-warn">⏰ {resetNote}</p>}
-      <div className="mt-auto flex flex-wrap items-center gap-2">
-        {tag && <Badge variant={tag === "Easy" ? "good" : "default"}>{tag}</Badge>}
-        {onToggleClaimed && !optional && (
-          <button
-            type="button"
-            onClick={onToggleClaimed}
-            aria-pressed={!!claimed}
-            className={cn(
-              "inline-flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold transition-colors max-sm:min-h-11 max-sm:px-3.5",
-              claimed ? "border-good bg-good text-white" : "text-muted-foreground hover:bg-secondary",
+      {isCheckup && resetNote && <p className="mt-2 text-xs font-semibold text-warn">⏰ {resetNote}</p>}
+
+      {!optional && (
+        // Footer pinned to the bottom so every card's actions line up.
+        <div className="mt-auto grid gap-2.5 pt-4">
+          {isCheckup ? (
+            <Button variant="hero" className="w-full" onClick={onMaxCheckup} aria-expanded={maxOpen}>
+              Max my {inr(perk.capInr!)} →
+            </Button>
+          ) : (
+            <Button variant="brand" className="w-full" onClick={() => askChat(claimQuestion(perk.name))}>
+              <MessageCircle className="size-4" /> How do I claim this? →
+            </Button>
+          )}
+          <div className="flex min-h-7 items-center justify-between gap-2">
+            {tag ? <Badge variant={tag === "Easy" ? "good" : "default"}>{tag}</Badge> : <span />}
+            {onToggleClaimed && (
+              <button
+                type="button"
+                onClick={onToggleClaimed}
+                aria-pressed={!!claimed}
+                className={cn(
+                  "inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold transition-colors max-sm:min-h-11 max-sm:px-3",
+                  claimed ? "bg-good text-white" : "text-muted-foreground underline-offset-2 hover:bg-secondary hover:underline",
+                )}
+              >
+                {claimed ? (
+                  <>
+                    Used <Check className="size-3" strokeWidth={3} />
+                  </>
+                ) : (
+                  "Mark as used"
+                )}
+              </button>
             )}
-          >
-            {claimed ? (
-              <>
-                Claimed <Check className="size-3" strokeWidth={3} />
-              </>
-            ) : (
-              "Mark claimed"
-            )}
-          </button>
-        )}
-        {isCheckup && (
-          <Button size="sm" variant="hero" className="ml-auto" onClick={onMaxCheckup} aria-expanded={maxOpen}>
-            Max my {inr(perk.capInr!)} →
-          </Button>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

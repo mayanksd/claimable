@@ -89,7 +89,7 @@ export const ExtractionModelSchema = z.object({
     "Planning a family: maternity, delivery / C-section limits, newborn cover, vaccinations, IVF / infertility, their waiting periods",
   ),
   lifestyle: ModelTopicSectionSchema.describe(
-    "Lifestyle care: diabetes, BP, cholesterol, thyroid, weight / obesity incl. bariatric, fatty liver, mental health, chronic-care or diet / weight / stress programmes, wellness coaching",
+    "Health glow-up (lifestyle care): diabetes, BP, cholesterol, thyroid, weight / obesity incl. bariatric, fatty liver, mental health, chronic-care or diet / weight / stress programmes, wellness coaching",
   ),
   checkupFrequency: z
     .object({
