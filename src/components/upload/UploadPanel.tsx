@@ -279,7 +279,7 @@ function SlotRow({ icon, label, hint }: { icon: React.ReactNode; label: string; 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-dashed border-brand-line bg-white/60 px-3.5 py-3 text-left text-muted-foreground">
       {icon}
-      <span className="min-w-0 flex-1 truncate font-semibold">{label}</span>
+      <span className="min-w-0 flex-1 font-semibold">{label}</span>
       <small className="hidden shrink-0 text-xs sm:inline">{hint}</small>
     </div>
   );
