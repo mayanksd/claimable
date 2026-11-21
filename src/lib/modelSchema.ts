@@ -8,6 +8,7 @@ import {
   RewardItemSchema,
   type Extraction,
 } from "./schema.ts";
+import { withComputedHero } from "./perks.ts";
 
 /**
  * The schema sent to Claude (structured outputs via generateObject).
@@ -112,7 +113,7 @@ export function normalizeExtraction(m: ExtractionModelOutput): Extraction {
     items: t.items.map((i) => ({ ...i, coveredFrom: orNull(i.coveredFrom) })),
     notMentioned: t.notMentioned,
   });
-  return ExtractionSchema.parse({
+  return withComputedHero(ExtractionSchema.parse({
     ...m,
     policy: { ...m.policy, startDate: orNull(m.policy.startDate) },
     optionalCovers: m.optionalCovers.map((c) => ({
@@ -126,7 +127,7 @@ export function normalizeExtraction(m: ExtractionModelOutput): Extraction {
     family: topic(m.family),
     lifestyle: topic(m.lifestyle),
     checkupFrequency: m.checkupFrequency.label.trim() && m.checkupFrequency.sourcePage > 0 ? m.checkupFrequency : null,
-  });
+  }));
 }
 
 /**

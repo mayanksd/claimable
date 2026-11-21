@@ -11,7 +11,7 @@ Fill the JSON schema exactly. Rules:
    - `good_to_know`: occasional (hearing aid, second opinion, restore, daily cash).
    - `emergency`: air ambulance, emergency helpline.
 4. `useItOrLoseIt` = true only if the limit is stated "per policy year" (or "per year") and is monetary.
-5. `heroValue.annualPerksValueInr` = sum of `capInr` of perks with `useItOrLoseIt = true`. `ratioToPremium` = that / `policy.annualPremiumInr`, one decimal. `annualPremiumInr` = gross premium / tenure years. If the document has no premium (e.g. policy wording without the schedule), set `annualPremiumInr` and `ratioToPremium` to 0.
+5. `heroValue.annualPerksValueInr` = sum of `capInr` of every `use_now` perk with `frequency = per_year` and a rupee cap (the app recomputes this; limits stated "per policy" for the whole tenure are not yearly). `ratioToPremium` = that / `policy.annualPremiumInr`, one decimal. `annualPremiumInr` = gross premium / tenure years. If the document has no premium (e.g. policy wording without the schedule), set `annualPremiumInr` and `ratioToPremium` to 0.
 6. Red flags = limits that surprise people at claim time, in plain words. Look for:
    - room-rent caps and the proportionate-deduction rule (a pricier room cuts the WHOLE claim)
    - co-pay of any kind: zone, non-network hospital, age-based

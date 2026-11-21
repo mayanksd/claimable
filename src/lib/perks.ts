@@ -39,3 +39,27 @@ export const HEALTH_CHECKUP_RE = /(?<!(dental|eye|vision)\s)check-?\s?ups?\b/i;
 
 /** The annual health check-up perk, if the policy has one with a ₹ limit. */
 export const isCheckupPerk = (p: Perk) => HEALTH_CHECKUP_RE.test(p.name) && (p.capInr ?? 0) > 0;
+
+/**
+ * The hero total, computed in code rather than trusted from the model:
+ * every "use any time" perk with a ₹ cap that resets each policy year.
+ * Excluded: "per policy" limits (once across the whole tenure), per-event limits, and
+ * hospital / emergency cover (air ambulance, sum-insured restore) which isn't money you'd use this year.
+ */
+export function computeHeroValue(e: Pick<Extraction, "perks" | "policy">): Extraction["heroValue"] {
+  const included = e.perks.filter(
+    (p) => p.category === "use_now" && p.frequency === "per_year" && typeof p.capInr === "number" && p.capInr > 0,
+  );
+  const total = included.reduce((s, p) => s + (p.capInr ?? 0), 0);
+  const premium = e.policy.annualPremiumInr;
+  return {
+    annualPerksValueInr: total,
+    ratioToPremium: premium > 0 ? Math.round((total / premium) * 10) / 10 : 0,
+    includedPerkIds: included.map((p) => p.id),
+  };
+}
+
+export const withComputedHero = <E extends Pick<Extraction, "perks" | "policy" | "heroValue">>(e: E): E => ({
+  ...e,
+  heroValue: computeHeroValue(e),
+});

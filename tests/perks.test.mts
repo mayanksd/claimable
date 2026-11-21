@@ -34,3 +34,32 @@ test("tags", () => {
 test("only the health check-up gets the planner, not dental check-ups", () => {
   assert.deepEqual(demo.perks.filter(isCheckupPerk).map((p: { id: string }) => p.id), ["health-checkup"]);
 });
+
+import { computeHeroValue } from "../src/lib/perks.ts";
+
+test("hero total: all per-year capped use-now perks; per-policy limits excluded", () => {
+  // The real-policy case: diagnostics ₹25,000 + dental ₹10,000 + OPD ₹5,000 showed as ₹25,000.
+  const perk = (id: string, capInr: number | null, frequency: string, category = "use_now") =>
+    ({ id, emoji: "", name: id, category, capInr, capLabel: "", frequency, claimMode: "reimbursement", useItOrLoseIt: false, oneLiner: "", sourcePage: 2 }) as any;
+  const hero = computeHeroValue({
+    policy: { annualPremiumInr: 20000 } as any,
+    perks: [
+      perk("diagnostics", 25000, "per_year"),
+      perk("dental", 10000, "per_year"),
+      perk("opd", 5000, "per_year"),
+      perk("hearing", 10000, "per_policy_term", "good_to_know"),
+      perk("lenses", 3000, "per_policy_term"),
+      perk("teleconsult", null, "unlimited"),
+      perk("air-ambulance", 250000, "per_year", "emergency"),
+      perk("restore", 500000, "per_year", "good_to_know"),
+    ],
+  });
+  assert.equal(hero.annualPerksValueInr, 40000);
+  assert.deepEqual(hero.includedPerkIds, ["diagnostics", "dental", "opd"]);
+  assert.equal(hero.ratioToPremium, 2);
+});
+
+test("hero total for the sample stays ₹27,000", () => {
+  assert.equal(computeHeroValue(demo).annualPerksValueInr, 27000);
+  assert.equal(computeHeroValue({ ...demo, policy: { ...demo.policy, annualPremiumInr: 0 } }).ratioToPremium, 0);
+});

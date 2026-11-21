@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { burstConfetti } from "@/lib/client/confetti";
 import type { Extraction } from "@/lib/schema";
 import { withSourcesOnly } from "@/lib/extraction";
+import { withComputedHero } from "@/lib/perks";
 import { claimedKey, claimedTotal } from "@/lib/claimed";
 import { formatDay, nextPolicyYearStart } from "@/lib/policyDates";
 import { useClaimed } from "@/lib/client/useClaimed";
@@ -39,7 +40,8 @@ type Props = {
 const EMPLOYER_TIP = "Tip: check your employer's group policy — they often cover maternity from day one.";
 
 export function Dashboard({ extraction, redactedText, redactions, firstName, demo, cachedAnswers, celebrate, pending, partBFailed }: Props) {
-  const e = useMemo(() => withSourcesOnly(extraction), [extraction]);
+  // Hero total is recomputed in code (also for saved results from older builds).
+  const e = useMemo(() => withComputedHero(withSourcesOnly(extraction)), [extraction]);
   const [tab, setTab] = useState("perks");
   const { claimed, toggle } = useClaimed(claimedKey(e));
 
@@ -60,12 +62,12 @@ export function Dashboard({ extraction, redactedText, redactions, firstName, dem
   const count = (n: number) => <span className="rounded-full bg-black/10 px-1.5 text-xs font-bold">{n}</span>;
 
   return (
-    <div className="mx-auto grid max-w-[1360px] gap-6 px-4 py-6 max-lg:pb-24 sm:px-7 lg:grid-cols-[1fr_400px]">
+    <div className="mx-auto grid max-w-[1360px] gap-6 px-4 pt-10 pb-8 max-lg:pb-24 sm:px-7 lg:grid-cols-[1fr_400px]">
       <main className="min-w-0">
         <div className="mb-4">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-[28px] leading-tight font-extrabold tracking-tight sm:text-[34px]">
-              Nice{firstName ? `, ${firstName}` : ""}! 🎉
+              {firstName ? `Nice, ${firstName}! 🎉` : "You're in! 🎉"}
             </h1>
             {e.documentType === "group_health" && <Badge variant="default">Employer policy</Badge>}
           </div>

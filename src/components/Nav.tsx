@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export function Nav({ sample = false, onStartOver }: { sample?: boolean; onStartOver?: () => void }) {
   return (
-    <nav className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border/70 bg-white/75 px-4 py-3.5 backdrop-blur-md sm:px-7">
+    <nav className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border/70 bg-white/75 px-6 py-3.5 backdrop-blur-md">
       <div className="flex items-center gap-2.5">
         <span className="inline-block size-7 rounded-lg bg-gradient-to-br from-brand to-brand-2" aria-hidden />
         <div className="leading-tight">
