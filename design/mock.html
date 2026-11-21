@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Policy Perks — UI mock</title>
+<style>
+:root{--bg:#f7f7fb;--card:#fff;--ink:#0f172a;--mute:#64748b;--line:#e5e7eb;--brand:#4f46e5;--brand2:#7c3aed;--good:#059669;--warn:#d97706;--bad:#dc2626;--r:16px}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.logo{font-weight:800;font-size:18px;display:flex;gap:8px;align-items:center}.logo i{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:inline-block}
+.tabs{display:flex;gap:6px}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-weight:600;cursor:pointer;color:var(--mute)}.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.screen{display:none}.screen.on{display:block}
+/* upload */
+.up{max-width:720px;margin:56px auto;text-align:center;padding:0 20px}
+.up h1{font-size:40px;line-height:1.1;margin:0 0 12px;letter-spacing:-.02em}.up h1 span{background:linear-gradient(90deg,var(--brand),var(--brand2));-webkit-background-clip:text;color:transparent}
+.up p{color:var(--mute);font-size:17px;margin:0 0 28px}
+.drop{border:2px dashed #c7d2fe;background:#eef2ff;border-radius:20px;padding:36px;display:grid;gap:14px}
+.file{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left}
+.file b{flex:1}.file small{color:var(--good);font-weight:600}
+.cta{margin-top:20px;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border:0;border-radius:12px;padding:14px 26px;font-size:16px;font-weight:700;cursor:pointer}
+.steps{margin:26px auto 0;max-width:420px;text-align:left;display:grid;gap:10px}
+.step{display:flex;gap:10px;align-items:center;color:var(--mute)}.step.done{color:var(--ink)}.dot{width:20px;height:20px;border-radius:50%;background:var(--good);color:#fff;font-size:12px;display:grid;place-items:center}.step.run .dot{background:var(--brand)}
+/* dashboard */
+.wrap{display:grid;grid-template-columns:1fr 400px;gap:24px;padding:24px 28px;max-width:1360px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.privacy{display:flex;gap:10px;align-items:center;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:12px;padding:10px 14px;font-weight:600;font-size:14px;margin-bottom:16px}
+.hero{background:radial-gradient(120% 140% at 0% 0%,#4f46e5 0%,#7c3aed 55%,#a21caf 100%);color:#fff;border:0;padding:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}
+.hero .k{opacity:.85;font-weight:600}.hero .big{font-size:56px;font-weight:800;letter-spacing:-.03em;margin:4px 0}
+.hero .sub{opacity:.9}.ratio{background:#ffffff1f;border-radius:14px;padding:16px}
+.bar{height:10px;background:#ffffff33;border-radius:999px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:#fff;border-radius:999px}
+h2{font-size:18px;margin:26px 0 12px;display:flex;justify-content:space-between;align-items:baseline}h2 small{font-size:13px;color:var(--mute);font-weight:500}
+.perks{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.perk{position:relative}.perk .em{font-size:28px}.perk h3{margin:8px 0 4px;font-size:15px}.perk .amt{font-size:22px;font-weight:800}.perk .amt small{font-size:12px;color:var(--mute);font-weight:500}
+.perk p{color:var(--mute);font-size:13px;margin:6px 0 10px}.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:#eef2ff;color:var(--brand)}.tag.g{background:#ecfdf5;color:var(--good)}
+.src{position:absolute;top:16px;right:16px;font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.reward{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.coins{width:110px;height:110px;border-radius:50%;background:conic-gradient(var(--good) 0 94%,#e5e7eb 0);display:grid;place-items:center}.coins div{width:86px;height:86px;border-radius:50%;background:#fff;display:grid;place-items:center;text-align:center;font-weight:800;font-size:20px}.coins small{display:block;font-size:11px;color:var(--mute);font-weight:600}
+.items{display:flex;gap:10px;flex-wrap:wrap}.item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px}.item b{display:block}.item.now{border-color:#a7f3d0;background:#ecfdf5}.item.next{border-color:#fde68a;background:#fffbeb}
+.flags{display:grid;gap:10px}.flag{display:flex;gap:12px;align-items:flex-start;border-left:4px solid var(--warn);padding:10px 14px;background:#fffbeb;border-radius:10px}.flag.hi{border-color:var(--bad);background:#fef2f2}.flag b{display:block}.flag span{font-size:13px;color:var(--mute)}
+/* chat */
+.chat{position:sticky;top:76px;height:calc(100vh - 100px);display:flex;flex-direction:column;padding:0;overflow:hidden}
+.chat header{padding:16px 18px;border-bottom:1px solid var(--line);font-weight:700}.chat header small{display:block;color:var(--mute);font-weight:500;font-size:12px}
+.msgs{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.me{align-self:flex-end;background:var(--ink);color:#fff;border-radius:14px 14px 4px 14px;padding:10px 14px;max-width:80%;font-size:14px}
+.ai{align-self:flex-start;background:#f8fafc;border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:12px 14px;max-width:92%;font-size:14px;line-height:1.45}
+.verdict{display:inline-block;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;margin-bottom:6px}.v-part{background:#fffbeb;color:var(--warn)}.v-yes{background:#ecfdf5;color:var(--good)}
+.cite{margin-top:8px;font-size:11px;color:var(--mute)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--line)}.chip{border:1px solid #c7d2fe;background:#eef2ff;color:var(--brand);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer}
+.input{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}.input input{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}.input button{background:var(--brand);color:#fff;border:0;border-radius:10px;padding:0 14px;font-weight:700}
+@media(max-width:1000px){.wrap{grid-template-columns:1fr}.perks{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}.chat{position:static;height:600px}}
+</style></head><body>
+<nav><div class="logo"><i></i>Policy Perks</div>
+<div class="tabs"><button class="on" onclick="show('s1',this)">1 · Upload</button><button onclick="show('s2',this)">2 · Dashboard + chat</button></div></nav>
+
+<section id="s1" class="screen on"><div class="up">
+<h1>You paid for perks.<br><span>Start using them.</span></h1>
+<p>Upload your health policy and your insurer app's rewards screen. See what you're owed in 20 seconds.</p>
+<div class="drop">
+<div class="file">📄 <b>aarogya-policy.pdf</b><small>4 pages ✓</small></div>
+<div class="file">📱 <b>rewards-screenshot.png</b><small>image ✓</small></div>
+<div style="color:var(--mute);font-size:13px">Drop PDF or screenshots here · nothing is stored</div></div>
+<button class="cta" onclick="show('s2',document.querySelectorAll('.tabs button')[1])">Find my perks →</button>
+<div class="steps">
+<div class="step done"><span class="dot">✓</span>Read 4 pages and 1 screenshot</div>
+<div class="step done"><span class="dot">✓</span>Masked 15 personal details (name, PAN, phone, email, address, policy no.…)</div>
+<div class="step run"><span class="dot">•</span>Finding perks, limits and red flags…</div></div></div></section>
+
+<section id="s2" class="screen"><div class="wrap"><main>
+<div class="privacy">🔒 15 personal details were masked before AI read your policy. Nothing is stored.</div>
+<div class="card hero"><div><div class="k">Aarogya Shield Premier · ₹10L sum insured</div>
+<div class="big">₹27,000</div><div class="sub">of perks you can claim every year, without being hospitalised.</div></div>
+<div class="ratio"><div style="font-weight:700">2.1× your premium</div><div class="bar"><i style="width:100%"></i></div><div style="font-size:13px;opacity:.9">Perks ₹27,000</div>
+<div class="bar"><i style="width:47%"></i></div><div style="font-size:13px;opacity:.9">Annual premium ₹12,800</div></div></div>
+
+<h2>Use these now <small>use-it-or-lose-it each policy year</small></h2>
+<div class="perks">
+<div class="card perk"><span class="src">p.2</span><div class="em">🦷</div><h3>Dental check-ups & treatment</h3><div class="amt">₹10,000 <small>/ year</small></div><p>Extraction, fillings, root canal, scaling. Keep bills and claim back.</p><span class="tag">Reimbursement</span></div>
+<div class="card perk"><span class="src">p.2</span><div class="em">🩺</div><h3>Free annual health check-up</h3><div class="amt">₹10,000 <small>/ year</small></div><p>Book in the app at a partner lab. No bills to pay.</p><span class="tag g">Cashless</span></div>
+<div class="card perk"><span class="src">p.2</span><div class="em">💊</div><h3>Doctor visits & medicines</h3><div class="amt">₹5,000 <small>/ year</small></div><p>Consultations, tests, prescribed medicines — no admission needed.</p><span class="tag">Reimbursement</span></div>
+<div class="card perk"><span class="src">p.2</span><div class="em">👓</div><h3>Spectacles or lenses</h3><div class="amt">₹2,000 <small>/ year</small></div><p>With an optometrist's prescription.</p><span class="tag">Reimbursement</span></div>
+<div class="card perk"><span class="src">p.2</span><div class="em">📞</div><h3>Doctor on call</h3><div class="amt">Unlimited</div><p>GP and specialist teleconsults, 24×7 in the app.</p><span class="tag g">Free</span></div>
+<div class="card perk"><span class="src">p.3</span><div class="em">🏋️</div><h3>Gym & pharmacy discounts</h3><div class="amt">Up to 20%</div><p>At partner gyms, pharmacies and labs.</p><span class="tag g">In app</span></div>
+</div>
+
+<h2>Your step rewards <small>from your app screenshot</small></h2>
+<div class="card reward"><div class="coins"><div>5,271<small>coins</small></div></div>
+<div><div style="font-weight:700;margin-bottom:10px">Redeem a hand grip today. You're 329 coins from a resistance band.</div>
+<div class="items"><div class="item now"><b>✊ Hand grip</b>2,000 · redeem now</div><div class="item next"><b>🎗️ Resistance band</b>5,600 · 329 to go</div><div class="item"><b>🧘 Yoga mat</b>7,000</div><div class="item"><b>🎒 Backpack</b>20,000</div></div>
+<div style="font-size:13px;color:var(--mute);margin-top:10px">Average 8,000 steps a day this year → 10% off your renewal premium (p.3)</div></div></div>
+
+<h2>Red flags <small>rare, but they hurt at claim time</small></h2>
+<div class="flags">
+<div class="flag hi">⚠️<div><b>20% co-pay in Mumbai or Delhi NCR</b><span>You pay Zone B premium; treatment in a Zone A city costs you 20% of every claim. (p.4)</span></div></div>
+<div class="flag">🏨<div><b>Room rent capped at ₹10,000 a day</b><span>A pricier room cuts your whole claim proportionately, not just the room. (p.2)</span></div></div>
+<div class="flag">🚑<div><b>Road ambulance only ₹3,000</b><span>Per hospitalisation. City ambulances often cost more. (p.2)</span></div></div>
+<div class="flag">🦻<div><b>Hearing aid ₹10,000 once in 3 years</b><span>"Per policy" means across the full tenure here, not yearly. (p.2, p.4)</span></div></div>
+</div></main>
+
+<aside class="card chat"><header>Ask your policy<small>Answers only from your documents, with the page</small></header>
+<div class="msgs">
+<div class="me">I need a tooth extraction. Is it covered?</div>
+<div class="ai"><span class="verdict v-part">PARTLY COVERED</span><br>Yes, under <b>OPD dental</b>, up to <b>₹10,000 a year</b>.<br>• It's reimbursement: pay the dentist, then claim in the app within 30 days.<br>• Keep the bill and the prescription.<br>• Cosmetic dentistry isn't covered.<div class="cite">Source: page 2 (Benefits table), page 3 (How to claim)</div></div>
+<div class="me">I broke my wrist playing football. What's covered?</div>
+<div class="ai"><span class="verdict v-yes">COVERED</span><br>• If you're admitted: up to your <b>₹10L sum insured</b>, cashless at a network hospital. Call <b>1800 000 1234</b> within 24 hours.<br>• If it's a plaster without admission: up to <b>₹5,000</b> under OPD, reimbursement.<div class="cite">Source: page 2, page 3</div></div>
+</div>
+<div class="chips"><span class="chip">🚨 Whom do I call in an emergency?</span><span class="chip">🏥 Is my hospital cashless?</span><span class="chip">🩺 Book my free check-up</span></div>
+<div class="input"><input placeholder="Ask anything about your policy…"><button>Ask</button></div></aside>
+</div></section>
+<script>function show(id,b){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));scrollTo(0,0)}</script>
+</body></html>

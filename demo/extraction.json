@@ -1,0 +1,303 @@
+{
+  "policy": {
+    "insurer": "Aarogya General Insurance (fictional)",
+    "product": "Aarogya Shield Premier",
+    "sumInsuredInr": 1000000,
+    "tenureYears": 3,
+    "annualPremiumInr": 12800,
+    "periodLabel": "1 Jan 2026 – 31 Dec 2028"
+  },
+  "perks": [
+    {
+      "id": "opd-dental",
+      "emoji": "🦷",
+      "name": "Dental check-ups & treatment",
+      "category": "use_now",
+      "capInr": 10000,
+      "capLabel": "₹10,000",
+      "frequency": "per_year",
+      "claimMode": "reimbursement",
+      "useItOrLoseIt": true,
+      "oneLiner": "Extraction, fillings, root canal, scaling. Keep bills and claim back.",
+      "sourcePage": 2
+    },
+    {
+      "id": "health-checkup",
+      "emoji": "🩺",
+      "name": "Free annual health check-up",
+      "category": "use_now",
+      "capInr": 10000,
+      "capLabel": "₹10,000",
+      "frequency": "per_year",
+      "claimMode": "cashless",
+      "useItOrLoseIt": true,
+      "oneLiner": "Book in the app at a partner lab. No bills to pay.",
+      "sourcePage": 2
+    },
+    {
+      "id": "opd",
+      "emoji": "💊",
+      "name": "Doctor visits & medicines",
+      "category": "use_now",
+      "capInr": 5000,
+      "capLabel": "₹5,000",
+      "frequency": "per_year",
+      "claimMode": "reimbursement",
+      "useItOrLoseIt": true,
+      "oneLiner": "Consultations, tests, prescribed medicines, plaster without admission.",
+      "sourcePage": 2
+    },
+    {
+      "id": "spectacles",
+      "emoji": "👓",
+      "name": "Spectacles or lenses",
+      "category": "use_now",
+      "capInr": 2000,
+      "capLabel": "₹2,000",
+      "frequency": "per_year",
+      "claimMode": "reimbursement",
+      "useItOrLoseIt": true,
+      "oneLiner": "With an optometrist's prescription.",
+      "sourcePage": 2
+    },
+    {
+      "id": "teleconsult",
+      "emoji": "📞",
+      "name": "Doctor on call",
+      "category": "use_now",
+      "capInr": null,
+      "capLabel": "Unlimited",
+      "frequency": "unlimited",
+      "claimMode": "free",
+      "useItOrLoseIt": false,
+      "oneLiner": "GP and specialist teleconsults, 24x7 in the app.",
+      "sourcePage": 2
+    },
+    {
+      "id": "partner-discounts",
+      "emoji": "🏋️",
+      "name": "Gym, pharmacy & lab discounts",
+      "category": "use_now",
+      "capInr": null,
+      "capLabel": "Up to 20%",
+      "frequency": "unlimited",
+      "claimMode": "in_app",
+      "useItOrLoseIt": false,
+      "oneLiner": "At partner gyms, pharmacies and diagnostic centres.",
+      "sourcePage": 3
+    },
+    {
+      "id": "wellness",
+      "emoji": "🥗",
+      "name": "Diet & stress programmes",
+      "category": "good_to_know",
+      "capInr": null,
+      "capLabel": "Free",
+      "frequency": "unlimited",
+      "claimMode": "in_app",
+      "useItOrLoseIt": false,
+      "oneLiner": "Diet, weight and stress management programmes in the app.",
+      "sourcePage": 3
+    },
+    {
+      "id": "hearing-aid",
+      "emoji": "🦻",
+      "name": "Hearing aid",
+      "category": "good_to_know",
+      "capInr": 10000,
+      "capLabel": "50% up to ₹10,000",
+      "frequency": "per_policy_term",
+      "claimMode": "reimbursement",
+      "useItOrLoseIt": false,
+      "oneLiner": "Prescribed by an ENT specialist; once across the 3-year term.",
+      "sourcePage": 2
+    },
+    {
+      "id": "second-opinion",
+      "emoji": "🧑‍⚕️",
+      "name": "Second opinion",
+      "category": "good_to_know",
+      "capInr": null,
+      "capLabel": "Covered",
+      "frequency": "per_event",
+      "claimMode": "free",
+      "useItOrLoseIt": false,
+      "oneLiner": "Expert second opinion for listed major illnesses.",
+      "sourcePage": 2
+    },
+    {
+      "id": "shared-room-cash",
+      "emoji": "🛏️",
+      "name": "Cash for choosing a shared room",
+      "category": "good_to_know",
+      "capInr": 7000,
+      "capLabel": "₹1,000/day, max ₹7,000",
+      "frequency": "per_event",
+      "claimMode": "reimbursement",
+      "useItOrLoseIt": false,
+      "oneLiner": "Paid per day if you pick a shared room in hospital.",
+      "sourcePage": 2
+    },
+    {
+      "id": "restore",
+      "emoji": "🔁",
+      "name": "Sum insured restore",
+      "category": "good_to_know",
+      "capInr": 1000000,
+      "capLabel": "100% once a year",
+      "frequency": "per_year",
+      "claimMode": "unknown",
+      "useItOrLoseIt": false,
+      "oneLiner": "Cover refills once a year for an unrelated illness.",
+      "sourcePage": 2
+    },
+    {
+      "id": "air-ambulance",
+      "emoji": "🚁",
+      "name": "Emergency air ambulance",
+      "category": "emergency",
+      "capInr": 250000,
+      "capLabel": "₹2,50,000",
+      "frequency": "per_year",
+      "claimMode": "cashless",
+      "useItOrLoseIt": false,
+      "oneLiner": "Life-threatening emergencies only; needs pre-approval.",
+      "sourcePage": 2
+    }
+  ],
+  "heroValue": {
+    "annualPerksValueInr": 27000,
+    "ratioToPremium": 2.1,
+    "includedPerkIds": [
+      "opd-dental",
+      "health-checkup",
+      "opd",
+      "spectacles"
+    ]
+  },
+  "rewards": {
+    "coinBalance": 5271,
+    "items": [
+      {
+        "name": "Resistance band",
+        "emoji": "🎗️",
+        "coins": 5600,
+        "available": true
+      },
+      {
+        "name": "Digital weighing scale",
+        "emoji": "⚖️",
+        "coins": 16000,
+        "available": true
+      },
+      {
+        "name": "Hand grip strengthener",
+        "emoji": "✊",
+        "coins": 2000,
+        "available": true
+      },
+      {
+        "name": "Electric heating bag",
+        "emoji": "♨️",
+        "coins": 7000,
+        "available": false
+      },
+      {
+        "name": "Hiking backpack 45L",
+        "emoji": "🎒",
+        "coins": 20000,
+        "available": true
+      },
+      {
+        "name": "Yoga mat 6mm",
+        "emoji": "🧘",
+        "coins": 7000,
+        "available": true
+      }
+    ],
+    "redeemableNow": [
+      "Hand grip strengthener"
+    ],
+    "nextItem": {
+      "name": "Resistance band",
+      "gap": 329
+    },
+    "programmeNote": "Average 8,000 steps a day over the policy year for 10% off your renewal premium (page 3)."
+  },
+  "redFlags": [
+    {
+      "id": "zone-copay",
+      "emoji": "⚠️",
+      "title": "20% co-pay in Mumbai or Delhi NCR",
+      "why": "You pay a Zone B premium; Zone A treatment costs you 20% of every claim.",
+      "severity": "high",
+      "sourcePage": 4
+    },
+    {
+      "id": "room-rent",
+      "emoji": "🏨",
+      "title": "Room rent capped at ₹10,000 a day",
+      "why": "A pricier room cuts your whole claim proportionately, not just the room.",
+      "severity": "high",
+      "sourcePage": 2
+    },
+    {
+      "id": "ambulance",
+      "emoji": "🚑",
+      "title": "Road ambulance only ₹3,000",
+      "why": "Per hospitalisation. City ambulances often cost more.",
+      "severity": "medium",
+      "sourcePage": 2
+    },
+    {
+      "id": "hearing-term",
+      "emoji": "🦻",
+      "title": "Hearing aid ₹10,000 once in 3 years",
+      "why": "'Per policy' means across the full tenure here, not yearly.",
+      "severity": "medium",
+      "sourcePage": 4
+    },
+    {
+      "id": "ped-wait",
+      "emoji": "⏳",
+      "title": "Pre-existing diseases wait 36 months",
+      "why": "Conditions you had before buying are not covered until 2029.",
+      "severity": "medium",
+      "sourcePage": 4
+    }
+  ],
+  "contacts": [
+    {
+      "purpose": "24x7 helpline (cashless approval, emergencies)",
+      "value": "1800 000 1234",
+      "sourcePage": 3
+    },
+    {
+      "purpose": "Senior citizen helpline",
+      "value": "1800 000 5678",
+      "sourcePage": 3
+    },
+    {
+      "purpose": "Claims email",
+      "value": "claims@aarogya-example.in",
+      "sourcePage": 3
+    },
+    {
+      "purpose": "Air ambulance desk",
+      "value": "1800 000 9111",
+      "sourcePage": 3
+    },
+    {
+      "purpose": "Grievance officer",
+      "value": "grievance@aarogya-example.in",
+      "sourcePage": 3
+    }
+  ],
+  "ambiguities": [
+    {
+      "wording": "Health check-up 'once per policy year' — does an unused year carry forward?",
+      "questionForInsurer": "If I skip this year's check-up, can I use two next year?",
+      "sourcePage": 2
+    }
+  ]
+}
