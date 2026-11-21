@@ -12,11 +12,17 @@ function Bar({ pct }: { pct: number }) {
   );
 }
 
-export function HeroValue({ policy, heroValue }: Pick<Extraction, "policy" | "heroValue">) {
+type Props = Pick<Extraction, "policy" | "heroValue"> & {
+  /** Skip the count-up (the reveal card just counted it). */
+  instant?: boolean;
+};
+
+export function HeroValue({ policy, heroValue, instant = false }: Props) {
   const perks = heroValue.annualPerksValueInr;
   const premium = policy.annualPremiumInr;
   const knownPremium = premium > 0;
-  const shown = useCountUp(perks);
+  const counted = useCountUp(perks);
+  const shown = instant ? perks : counted;
   const max = Math.max(perks, premium, 1);
   const ratio = heroValue.ratioToPremium || (knownPremium ? perks / premium : 0);
   const sub = [policy.product, policy.sumInsuredInr > 0 ? `${inrShort(policy.sumInsuredInr)} sum insured` : ""].filter(Boolean).join(" · ");
@@ -27,13 +33,13 @@ export function HeroValue({ policy, heroValue }: Pick<Extraction, "policy" | "he
       style={{ background: "radial-gradient(130% 150% at 0% 0%, #4f46e5 0%, #7c3aed 50%, #e2557a 85%, #ff7a59 100%)" }}
     >
       <div>
-        <div className="text-xl font-semibold opacity-90">You&apos;re sitting on</div>
+        <div className="text-xl font-semibold opacity-90">You&apos;re sitting on up to</div>
         <div className="font-display my-1 text-[48px] leading-none font-extrabold tracking-tight tabular-nums drop-shadow-sm sm:text-[64px]" aria-label={inr(perks)}>
-          {!knownPremium && <span className="mr-2 text-xl font-bold opacity-90">up to</span>}
           {inr(shown)}
         </div>
         <div className="text-xl font-semibold">of perks this year 🎉</div>
-        <div className="mt-2 text-sm opacity-80">{sub}</div>
+        <p className="mt-1.5 text-xs font-medium opacity-85">Limits from your policy. How you claim depends on its terms.</p>
+        <div className="mt-3 text-sm opacity-80">{sub}</div>
       </div>
       {knownPremium && (
         <div className="rounded-2xl bg-white/15 p-4 backdrop-blur-sm">

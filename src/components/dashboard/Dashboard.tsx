@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { burstConfetti } from "@/lib/client/confetti";
+import { useMemo, useState } from "react";
 import type { Extraction } from "@/lib/schema";
 import { withSourcesOnly } from "@/lib/extraction";
 import { withComputedHero } from "@/lib/perks";
@@ -11,7 +10,6 @@ import { useClaimed } from "@/lib/client/useClaimed";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ChatFab } from "@/components/chat/ChatFab";
 import { Badge } from "@/components/ui/badge";
-import { PrivacyBanner } from "./PrivacyBanner";
 import { HeroValue } from "./HeroValue";
 import { PerkGrid } from "./PerkGrid";
 import { MoneyBack } from "./MoneyBack";
@@ -30,8 +28,8 @@ type Props = {
   firstName?: string | null;
   demo: boolean;
   cachedAnswers: Record<string, string>;
-  /** First reveal of a fresh result: confetti once. */
-  celebrate?: boolean;
+  /** The reveal card already counted the ₹ up; show the hero total straight away. */
+  revealed?: boolean;
   /** Family / lifestyle / watch-out data still loading (part B). */
   pending?: boolean;
   partBFailed?: boolean;
@@ -39,27 +37,19 @@ type Props = {
 
 const EMPLOYER_TIP = "Tip: check your employer's group policy — they often cover maternity from day one.";
 
-export function Dashboard({ extraction, redactedText, redactions, firstName, demo, cachedAnswers, celebrate, pending, partBFailed }: Props) {
+export function Dashboard({ extraction, redactedText, firstName, demo, cachedAnswers, revealed, pending, partBFailed }: Props) {
   // Hero total is recomputed in code (also for saved results from older builds).
   const e = useMemo(() => withComputedHero(withSourcesOnly(extraction)), [extraction]);
   const [tab, setTab] = useState("perks");
   const { claimed, toggle } = useClaimed(claimedKey(e));
 
-  const celebrated = useRef(false);
-  useEffect(() => {
-    if (!celebrate || celebrated.current || e.heroValue.annualPerksValueInr <= 0) return;
-    celebrated.current = true;
-    const t = setTimeout(() => void burstConfetti({ x: 0.32, y: 0.35 }), 450);
-    return () => clearTimeout(t);
-  }, [celebrate, e.heroValue.annualPerksValueInr]);
 
   const flags = watchOutFlags(e);
-  const serious = flags.filter((f) => f.severity === "high").length;
+
   const reset = e.checkupFrequency?.everyYear ? nextPolicyYearStart(e.policy.startDate, new Date()) : null;
   const resetNote = reset ? `Your check-up resets on ${formatDay(reset)} — book before then.` : null;
   const maternityExcluded = e.family.items.some((i) => /maternity|deliver/i.test(i.title) && i.status === "not_covered");
 
-  const count = (n: number) => <span className="rounded-full bg-black/10 px-1.5 text-xs font-bold">{n}</span>;
 
   return (
     <div className="mx-auto grid max-w-[1360px] gap-6 px-4 pt-10 pb-8 max-lg:pb-24 sm:px-7 lg:grid-cols-[1fr_400px]">
@@ -73,13 +63,12 @@ export function Dashboard({ extraction, redactedText, redactions, firstName, dem
           </div>
           <p className="text-base font-medium text-muted-foreground">Here&apos;s what your policy owes you.</p>
         </div>
-        <PrivacyBanner count={redactions.count} />
         {!e.isScheduleIncluded && (
           <div className="mb-4 rounded-xl border border-warn-line bg-warn-soft px-3.5 py-2.5 text-sm font-medium text-foreground">
             📄 We only found the general policy wording. Upload the full PDF with your schedule to see your exact perks.
           </div>
         )}
-        <HeroValue policy={e.policy} heroValue={e.heroValue} />
+        <HeroValue policy={e.policy} heroValue={e.heroValue} instant={revealed} />
 
         <Tabs
           active={tab}
@@ -93,10 +82,11 @@ export function Dashboard({ extraction, redactedText, redactions, firstName, dem
               label: "Watch out",
               badge: pending ? (
                 <Loader2 className="size-3.5 animate-spin text-muted-foreground" aria-label="loading" />
-              ) : serious ? (
-                <span className="rounded-full bg-bad px-1.5 text-xs font-bold text-white">{serious} serious</span>
               ) : flags.length ? (
-                count(flags.length)
+                // Amber on the tab; red is kept for the serious items inside it.
+                <span className="rounded-full border border-warn-line bg-warn-soft px-1.5 text-xs font-bold text-warn">
+                  {flags.length} to know
+                </span>
               ) : undefined,
             },
           ]}

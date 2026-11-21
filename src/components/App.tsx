@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, MotionConfig, motion } from "framer-motion";
+import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence, MotionConfig, motion, useReducedMotion } from "framer-motion";
+import { RevealCard } from "@/components/RevealCard";
+import { computeHeroValue } from "@/lib/perks";
+import { withSourcesOnly } from "@/lib/extraction";
 import { Nav } from "@/components/Nav";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { UploadPanel } from "@/components/upload/UploadPanel";
@@ -39,6 +42,7 @@ export function App() {
 
   function show(r: AnalysisResult) {
     setUploadError(null);
+    setRevealDone(false);
     setResult(r);
     setFresh(true);
     window.scrollTo(0, 0);
@@ -84,7 +88,12 @@ export function App() {
     } catch {}
   }
 
-  const view = !ready ? "loading" : result ? "dashboard" : "upload";
+  const reduceMotion = useReducedMotion();
+  // A freshly produced result gets the ~1.5 s reveal card first (not with reduced motion, not for saved results).
+  const [revealDone, setRevealDone] = useState(false);
+  const finishReveal = useCallback(() => setRevealDone(true), []);
+  const revealing = !!result && fresh && !revealDone && !reduceMotion;
+  const view = !ready ? "loading" : result ? (revealing ? "reveal" : "dashboard") : "upload";
 
   return (
     <MotionConfig reducedMotion="user">
@@ -96,9 +105,14 @@ export function App() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+            transition={{ duration: view === "reveal" ? 0.3 : 0.35, ease: "easeOut" }}
           >
-            {result ? (
+            {result && view === "reveal" ? (
+              <RevealCard
+                total={computeHeroValue(withSourcesOnly(result.extraction)).annualPerksValueInr}
+                onDone={finishReveal}
+              />
+            ) : result ? (
               <Dashboard
                 extraction={result.extraction}
                 redactedText={result.redactedText}
@@ -108,7 +122,7 @@ export function App() {
                 partBFailed={!!result.partBFailed}
                 demo={demo}
                 cachedAnswers={cachedAnswers}
-                celebrate={fresh}
+                revealed={fresh}
               />
             ) : (
               <UploadPanel demo={demo} onDone={show} onUpdate={applyUpdate} initialError={uploadError} />
