@@ -1,4 +1,4 @@
-import { MAX_PDF_LABEL } from "@/lib/limits";
+import { MAX_PDF_BYTES, MAX_PDF_LABEL, pdfTooBigMessage } from "@/lib/limits";
 import type { AnalyzeEvent } from "@/lib/analysis";
 import { demoEvents } from "@/lib/demoEvents";
 
@@ -27,7 +27,14 @@ export async function runAnalysis(
   if (!res.ok || !res.body) {
     const msg =
       res.status === 413
-        ? `That upload is too large. Please keep the PDF under ${MAX_PDF_LABEL}.`
+        ? await res
+            .json()
+            .then((j: { error?: string }) => j.error)
+            .catch(() =>
+              input.policy.size > MAX_PDF_BYTES
+                ? pdfTooBigMessage(input.policy.size)
+                : `That upload is too large. Please keep the PDF under ${MAX_PDF_LABEL}.`,
+            )
         : await res
             .json()
             .then((j: { error?: string }) => j.error)

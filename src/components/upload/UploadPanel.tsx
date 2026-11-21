@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { AnalysisResult } from "@/lib/analysis";
 import { compressImage } from "@/lib/client/compress";
 import { runAnalysis } from "@/lib/client/analyze";
-import { MAX_PDF_BYTES, MAX_PDF_LABEL, MAX_SCREENS, MAX_UPLOAD_BYTES, fileSize, mb } from "@/lib/limits";
+import { LIMIT_HINT, MAX_PDF_BYTES, MAX_SCREENS, MAX_UPLOAD_BYTES, fileSize, mb, pdfTooBigMessage } from "@/lib/limits";
 import { cn } from "@/lib/utils";
 
 type StepState = "todo" | "run" | "done";
@@ -45,9 +45,7 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
     if (pdfs.length) {
       const pdf = pdfs[0];
       if (pdf.size > MAX_PDF_BYTES) {
-        setError(
-          `“${pdf.name}” is ${mb(pdf.size)}. Please use a PDF under ${MAX_PDF_LABEL}: the policy schedule and benefits pages are enough.`,
-        );
+        setError(pdfTooBigMessage(pdf.size));
       } else setPolicy(pdf);
       if (pdfs.length > 1) notes.push("Only one policy PDF is used at a time.");
     }
@@ -200,6 +198,7 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
         </div>
       </div>
 
+      <p className="mt-2.5 text-xs font-medium text-muted-foreground">{LIMIT_HINT}</p>
       {notice && <p className="mt-3 text-sm text-muted-foreground">{notice}</p>}
       {error && (
         <div role="alert" className="mt-4 rounded-xl border border-bad/30 bg-bad-soft px-4 py-3 text-left text-sm font-medium text-bad">

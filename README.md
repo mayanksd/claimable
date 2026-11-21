@@ -43,5 +43,5 @@ git init && git add -A && git commit -m "scaffold"
 ## Running it
 - `npm run dev`, then open `/` (upload) or `/?demo=1` (demo mode: no API call, sample result after 2.5 s).
 - `ANTHROPIC_API_KEY` is read only on the server (set it in Vercel). Without it `/api/analyze` returns a clear error; `DEMO_MODE=1` makes the API serve the sample instead.
-- Limits: PDF ≤ 4 MB, up to 3 screenshots (compressed in the browser), whole upload < 4.4 MB (Vercel's body limit is ~4.5 MB).
+- Limits: PDF ≤ 4 MB (shown under the dropzone), up to 3 screenshots (resized in the browser), whole upload < 4.4 MB (Vercel body limit ~4.5 MB). Scanned PDFs with no text are rejected with a hint to use the digital copy.
 - `npm run check:redact [-- some.pdf]` extracts a PDF like the API does and prints what was masked. `OUT=demo/redacted-policy.json npm run check:redact` regenerates the demo-mode fixture.

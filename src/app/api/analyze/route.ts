@@ -4,7 +4,7 @@ import { redact } from "@/lib/redact";
 import { ExtractionSchema } from "@/lib/schema";
 import { withSourcesOnly } from "@/lib/extraction";
 import { demoEvents } from "@/lib/demoEvents";
-import { MAX_PDF_BYTES, MAX_PDF_LABEL, MAX_SCREENS, MAX_UPLOAD_BYTES, mb } from "@/lib/limits";
+import { MAX_PDF_BYTES, MAX_SCREENS, MAX_UPLOAD_BYTES, SCANNED_PDF_MESSAGE, mb, pdfTooBigMessage } from "@/lib/limits";
 import type { AnalyzeEvent } from "@/lib/analysis";
 import { pdfToMarkedText } from "@/lib/server/pdf";
 import { loadPrompt } from "@/lib/server/prompts";
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     return fail("The policy must be a PDF file.", 400);
   }
   if (policy.size > MAX_PDF_BYTES) {
-    return fail(`Your PDF is ${mb(policy.size)}. Please upload one under ${MAX_PDF_LABEL} (try the schedule and benefits pages only).`, 413);
+    return fail(pdfTooBigMessage(policy.size), 413);
   }
   const screens = form
     .getAll("screens[]")
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
       return;
     }
     if (pdf.text.replace(/\[\[PAGE \d+\]\]/g, "").trim().length < 200) {
-      yield { type: "error", message: "This PDF has almost no text (it may be a scan). Please upload the insurer's digital policy PDF." };
+      yield { type: "error", message: SCANNED_PDF_MESSAGE };
       return;
     }
     yield { type: "read", pages: pdf.pages, screens: screens.length };
