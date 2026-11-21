@@ -54,7 +54,13 @@ export function App() {
     <>
       <Nav sample={!!result?.sample} onStartOver={result ? startOver : undefined} />
       {!ready ? null : result ? (
-        <Dashboard extraction={result.extraction} redactions={result.redactions} cachedAnswers={cachedAnswers} />
+        <Dashboard
+          extraction={result.extraction}
+          redactedText={result.redactedText}
+          redactions={result.redactions}
+          demo={demo}
+          cachedAnswers={cachedAnswers}
+        />
       ) : (
         <UploadPanel demo={demo} onDone={show} />
       )}

@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     "/api/analyze": ["./prompts/**"],
     "/api/chat": ["./prompts/**"],
   },
-  serverExternalPackages: ["unpdf"],
+  serverExternalPackages: ["unpdf", "ai", "@ai-sdk/anthropic", "@ai-sdk/provider-utils"],
 };
 
 export default nextConfig;
