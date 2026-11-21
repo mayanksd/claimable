@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { AnalysisResult, AnalyzeEvent } from "@/lib/analysis";
 import { compressImage } from "@/lib/client/compress";
 import { runAnalysis } from "@/lib/client/analyze";
-import { LIMIT_HINT, MAX_PDF_BYTES, MAX_SCREENS, MAX_UPLOAD_BYTES, fileSize, mb, pdfTooBigMessage } from "@/lib/limits";
+import { MAX_PDF_BYTES, MAX_PDF_LABEL, MAX_SCREENS, MAX_UPLOAD_BYTES, fileSize, mb, pdfTooBigMessage } from "@/lib/limits";
 import { cn } from "@/lib/utils";
 import { ErrorText } from "@/components/ErrorDetail";
 import { FunFact, LoadingHeadline } from "./LoadingCopy";
@@ -46,7 +46,9 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
   const [notice, setNotice] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
   const [progress, setProgress] = useState<Progress>(IDLE);
-  const input = useRef<HTMLInputElement>(null);
+  const policyInput = useRef<HTMLInputElement>(null);
+  const screensInput = useRef<HTMLInputElement>(null);
+  const [showScreens, setShowScreens] = useState(false);
 
   async function addFiles(list: File[], fromSample = false) {
     setError(null);
@@ -166,19 +168,25 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
 
   const { read, masked, perks } = progress;
 
+  const pickPolicy = () => policyInput.current?.click();
+  const screensOpen = showScreens || screens.length > 0;
+
   return (
-    <div className="mx-auto my-8 max-w-[720px] px-5 text-center sm:my-12">
+    <div className="mx-auto my-8 w-full max-w-[640px] px-5 text-center sm:my-12">
       <AnimatePresence mode="wait" initial={false}>
         {!analyzing ? (
           <motion.div key="upload" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.3 }}>
-            <h1 className="text-[36px] leading-[1.05] font-extrabold tracking-tight sm:text-[48px]">
-              You paid for perks.
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-white/80 px-3.5 py-1.5 text-sm font-semibold text-brand shadow-sm">
+              <span aria-hidden>🩺</span> Health insurance perk finder
+            </span>
+            <h1 className="mt-4 text-[34px] leading-[1.08] font-extrabold tracking-tight text-balance sm:text-[48px]">
+              Your health insurance has perks.
               <br />
               <span className="bg-gradient-to-r from-brand via-brand-2 to-warm bg-clip-text text-transparent">Start using them.</span>
             </h1>
             <p className="mt-3 text-xl font-medium text-muted-foreground">See what you&apos;re owed in 20 seconds.</p>
 
-            <ul className="mx-auto mt-7 mb-7 grid max-w-[540px] gap-3 text-left text-base sm:text-base">
+            <ul className="mx-auto mt-7 mb-7 grid max-w-[520px] gap-3 text-left text-base">
               <li className="flex items-center gap-3.5">
                 <EmojiCircle emoji="🩺" tone="bg-warm-soft" />
                 <span>
@@ -191,12 +199,8 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
               </li>
             </ul>
 
+            {/* The whole card is a drop target; the button opens the picker. */}
             <div
-              role="button"
-              tabIndex={0}
-              aria-label="Add your policy PDF and screenshots"
-              onClick={() => input.current?.click()}
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && input.current?.click()}
               onDragOver={(e) => {
                 e.preventDefault();
                 setDrag(true);
@@ -208,79 +212,86 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
                 void addFiles([...e.dataTransfer.files]);
               }}
               className={cn(
-                "grid cursor-pointer grid-cols-[minmax(0,1fr)] gap-3 rounded-3xl border-2 border-dashed border-brand-line bg-white/70 p-5 shadow-soft backdrop-blur transition-colors sm:p-7",
+                "grid grid-cols-[minmax(0,1fr)] gap-3 rounded-3xl border-2 border-dashed border-brand-line bg-white/75 p-5 shadow-soft backdrop-blur transition-colors sm:p-7",
                 drag && "border-brand bg-brand-soft",
               )}
             >
               <input
-                ref={input}
+                ref={policyInput}
                 type="file"
-                multiple
                 hidden
-                accept="application/pdf,.pdf,image/*"
+                accept="application/pdf,.pdf"
                 onChange={(e) => {
                   void addFiles([...(e.target.files ?? [])]);
                   e.target.value = "";
                 }}
               />
-              {policy ? (
-                <FileRow emoji="📄" name={policy.name} meta={`PDF · ${fileSize(policy.size)}`} onRemove={() => setPolicy(null)} />
-              ) : (
-                <SlotRow emoji="📄" label="Your policy PDF" hint="required" />
-              )}
-              {screens.map((sc, i) => (
-                <FileRow
-                  key={`${sc.name}-${i}`}
-                  emoji="📱"
-                  name={sc.name}
-                  meta={`image · ${fileSize(sc.size)}`}
-                  onRemove={() => setScreens((xs) => xs.filter((_, j) => j !== i))}
-                />
-              ))}
-              {screens.length < MAX_SCREENS && (
-                <SlotRow
-                  emoji="📱"
-                  label={
-                    screens.length
-                      ? "Add another screenshot (optional)"
-                      : "Optional: screenshots from your insurance app (home or rewards page)"
-                  }
-                  hint={`up to ${MAX_SCREENS}`}
-                />
-              )}
-              <div className="text-sm text-muted-foreground">
-                {busy === "adding" ? (
-                  "Preparing screenshots…"
-                ) : (
-                  <>
-                    <b className="text-brand">Drop files here or click to choose</b> · nothing is stored
-                  </>
-                )}
-                <div className="mt-1 text-xs">{LIMIT_HINT}</div>
-              </div>
-            </div>
+              <input
+                ref={screensInput}
+                type="file"
+                multiple
+                hidden
+                accept="image/*"
+                onChange={(e) => {
+                  void addFiles([...(e.target.files ?? [])]);
+                  e.target.value = "";
+                }}
+              />
+              {policy && <FileRow emoji="📄" name={policy.name} meta={`PDF · ${fileSize(policy.size)}`} onRemove={() => setPolicy(null)} />}
 
-            {notice && <p className="mt-3 text-sm text-muted-foreground">{notice}</p>}
-            {error && (
-              <div role="alert" className="mt-4 rounded-2xl border border-bad/30 bg-bad-soft px-4 py-3 text-left text-sm font-medium text-bad">
-                <ErrorText text={error} />
-              </div>
-            )}
+              {error && (
+                <div role="alert" className="rounded-2xl border border-bad/30 bg-bad-soft px-4 py-3 text-left text-sm font-medium text-bad">
+                  <ErrorText text={error} />
+                </div>
+              )}
+              {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
 
-            <div className="mt-6 flex flex-col items-center gap-2">
-              <Button variant="hero" size="lg" className="h-14 rounded-2xl px-9 text-xl" disabled={(!policy && !demo) || !!busy} onClick={analyze}>
-                Find my perks →
+              <Button
+                variant="hero"
+                size="lg"
+                className="h-14 w-full rounded-2xl text-xl sm:w-auto sm:justify-self-center sm:px-10"
+                disabled={!!busy}
+                onClick={policy ? analyze : pickPolicy}
+              >
+                {policy ? "Find my hidden perks ✨" : "Upload policy PDF →"}
               </Button>
-              {!policy && !demo && <p className="text-sm font-medium text-muted-foreground">Add your policy first</p>}
-              <Button variant="ghost" size="lg" onClick={loadSample} disabled={!!busy}>
-                ✨ Try with sample policy
-              </Button>
-            </div>
-            {!policy && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                The sample is a fictional Aarogya policy. {demo && "Demo mode: no files are sent anywhere."}
+              <p className="text-sm text-muted-foreground">
+                {busy === "adding" ? "Preparing screenshots…" : `Or drop your PDF here · up to ${MAX_PDF_LABEL}`}
               </p>
-            )}
+
+              {screensOpen ? (
+                <div className="grid gap-2.5 text-left">
+                  <p className="text-sm font-semibold text-muted-foreground">Insurance app screenshots (optional) · home or rewards page</p>
+                  {screens.map((sc, i) => (
+                    <FileRow
+                      key={`${sc.name}-${i}`}
+                      emoji="📱"
+                      name={sc.name}
+                      meta={`image · ${fileSize(sc.size)}`}
+                      onRemove={() => setScreens((xs) => xs.filter((_, j) => j !== i))}
+                    />
+                  ))}
+                  {screens.length < MAX_SCREENS && (
+                    <button type="button" onClick={() => screensInput.current?.click()} className="cursor-pointer text-left">
+                      <SlotRow emoji="📱" label={screens.length ? "Add another screenshot" : "Choose screenshots"} hint={`up to ${MAX_SCREENS}`} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowScreens(true)}
+                  className="min-h-11 cursor-pointer justify-self-center rounded-lg px-2 text-sm font-semibold text-brand hover:underline"
+                >
+                  + Add insurance app screenshots (optional)
+                </button>
+              )}
+
+              <Button variant="ghost" size="lg" className="justify-self-center" onClick={loadSample} disabled={!!busy}>
+                ✨ Try with a sample policy
+              </Button>
+            </div>
+
             <p className="mx-auto mt-5 max-w-[520px] text-xs text-muted-foreground italic">
               🔒 We mask your name, PAN, phone, email, address and policy number before AI reads anything. Files are never
               stored. Crop names out of screenshots.
@@ -293,7 +304,7 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.3 }}
-            className="mx-auto mt-6 max-w-[480px]"
+            className="mx-auto mt-6 w-full max-w-[640px]"
           >
             <div className="rounded-3xl border border-border/70 bg-white/80 p-6 text-left shadow-soft backdrop-blur sm:p-8">
             <div className="mb-5">
@@ -365,7 +376,7 @@ function FileRow({ emoji, name, meta, onRemove }: { emoji: string; name: string;
       onClick={(e) => e.stopPropagation()}
     >
       <EmojiCircle emoji={emoji} tone="bg-good-soft" />
-      <b className="min-w-0 flex-1 truncate">{name}</b>
+      <b className="min-w-0 flex-1 break-all sm:truncate sm:break-normal">{name}</b>
       <small className="shrink-0 font-semibold whitespace-nowrap text-good">{meta} ✓</small>
       {onRemove && (
         <button type="button" onClick={onRemove} aria-label={`Remove ${name}`} className="grid shrink-0 place-items-center rounded-full p-1.5 text-muted-foreground hover:bg-secondary max-sm:size-11">

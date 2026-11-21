@@ -56,7 +56,7 @@ export function FunFact() {
   const n = useTick(FACT_MS);
   const reduce = useReducedMotion();
   return (
-    <div className="mx-auto mt-5 flex max-w-[480px] items-start gap-2.5 rounded-2xl bg-white/60 px-4 py-3 text-left text-sm backdrop-blur">
+    <div className="mx-auto mt-5 flex w-full items-start gap-2.5 rounded-2xl bg-white/60 px-4 py-3 text-left text-sm backdrop-blur">
       <span aria-hidden className="text-base">💡</span>
       <div className="min-w-0">
         <b className="block text-xs text-brand">Did you know?</b>
