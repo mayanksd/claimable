@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // System prompts are read from disk at runtime; make sure Vercel ships them with the routes.
+  outputFileTracingIncludes: {
+    "/api/analyze": ["./prompts/**"],
+    "/api/chat": ["./prompts/**"],
+  },
+  serverExternalPackages: ["unpdf"],
 };
 
 export default nextConfig;
