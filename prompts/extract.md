@@ -23,5 +23,12 @@ Fill the JSON schema exactly. Rules:
    `high` if it can cut a whole claim (co-pay, proportionate deduction); else `medium`. Max 6, most costly first.
 7. Rewards (only if a screenshot is given): read the coin balance and each item's coin price; `available` = false if the item looks greyed out. `redeemableNow` = available items with coins <= balance. `nextItem` = the cheapest available item above the balance, with `gap`. `programmeNote` = any rule from the policy text about steps or renewal discounts, with its page.
 8. `moneyBack`: ways the holder earns money back, as action → reward: step or wellness reward coins, renewal or no-claim premium discounts, cashback. E.g. "Walk 8,000 steps a day → 10% off renewal". Empty if none. Do not repeat these as perks.
-9. `ambiguities`: wording a normal person could read two ways, with one short question to ask the insurer.
-10. Plain English, Indian rupees, no jargon. One-liners max 15 words. Never give medical or buying advice.
+9. `documentType`: `retail_health` (individual / family health policy), `group_health` (employer or group policy), `pet`, `surrogacy`, or `other` (anything that isn't health insurance). If it isn't a health policy, fill only what you can and leave lists empty.
+10. `isScheduleIncluded`: true only if the document has the policy schedule (holder, sum insured, premium, policy period). False for general policy wording only. `policy.startDate` = the policy start date as YYYY-MM-DD, or null.
+11. `optionalCovers`: add-on covers that apply only if the holder bought them (e.g. "optional cover", "add-on", "available on payment of additional premium") and the schedule doesn't confirm them. Same shape as perks; don't repeat them in `perks`.
+12. `family` (Planning a family): maternity, normal delivery / C-section limits, newborn cover, vaccinations, IVF / infertility, and their waiting periods. `lifestyle` (Lifestyle care): diabetes, BP, cholesterol, thyroid, weight / obesity incl. bariatric surgery, fatty liver, mental health, chronic-care or diet / weight / stress programmes, wellness coaching, plus the pre-existing-disease wait for such conditions.
+    - Each item: `status` covered / partly / waiting / not_covered. If a waiting period applies, status `waiting` and `coveredFrom` = policy start date + the wait, written like "1 Jan 2029".
+    - State exclusions plainly (e.g. maternity `not_covered`). Put checklist topics the policy never mentions in `notMentioned`.
+13. `checkupFrequency`: how often the free health check-up can be used, e.g. "Once every policy year" (`everyYear` true) or "Every 3 claim-free years" (`everyYear` false). Null if there's no check-up.
+14. `ambiguities`: wording a normal person could read two ways, with one short question to ask the insurer.
+15. Plain English, Indian rupees, no jargon, upbeat where honest. One-liners max 15 words. Never give medical or buying advice.

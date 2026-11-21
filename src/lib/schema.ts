@@ -37,7 +37,33 @@ export const MoneyBackSchema = z.object({
   sourcePage: z.number().int(),
 });
 
+export const TopicItemSchema = z.object({
+  id: z.string(),
+  emoji: z.string(),
+  title: z.string().describe("Plain words, e.g. 'Maternity & delivery'"),
+  detail: z.string().describe("Limit or condition in plain words, max 15 words"),
+  status: z.enum(["covered", "partly", "waiting", "not_covered"]),
+  coveredFrom: z
+    .string()
+    .nullable()
+    .describe("When status is 'waiting': the date cover starts, e.g. '1 Jan 2029' (policy start + waiting period); else null"),
+  sourcePage: z.number().int(),
+});
+
+const TopicSectionSchema = z.object({
+  items: z.array(TopicItemSchema),
+  notMentioned: z.array(z.string()).describe("Topics from the checklist that the policy doesn't mention at all"),
+});
+
 export const ExtractionSchema = z.object({
+  documentType: z
+    .enum(["retail_health", "group_health", "pet", "surrogacy", "other"])
+    .default("retail_health")
+    .describe("retail_health = individual/family health policy; group_health = employer group policy"),
+  isScheduleIncluded: z
+    .boolean()
+    .default(true)
+    .describe("True if the policy schedule (holder, sum insured, premium, period) is in the document; false for wording only"),
   policy: z.object({
     insurer: z.string(),
     product: z.string(),
@@ -45,6 +71,7 @@ export const ExtractionSchema = z.object({
     tenureYears: z.number(),
     annualPremiumInr: z.number().describe("Gross premium divided by tenure years; 0 if the premium is not in the document"),
     periodLabel: z.string(),
+    startDate: z.string().nullable().default(null).describe("Policy start date as YYYY-MM-DD; null if not in the document"),
   }),
   perks: z.array(PerkSchema),
   heroValue: z.object({
@@ -66,6 +93,25 @@ export const ExtractionSchema = z.object({
     .array(MoneyBackSchema)
     .default([])
     .describe("Ways to earn money back: wellness reward coins, renewal / no-claim premium discounts, cashback. Empty if none"),
+  optionalCovers: z
+    .array(PerkSchema)
+    .default([])
+    .describe("Add-on / optional covers that apply only if bought (not confirmed in the schedule). Not repeated in perks"),
+  family: TopicSectionSchema.default({ items: [], notMentioned: [] }).describe(
+    "Planning a family: maternity, delivery / C-section limits, newborn cover, vaccinations, IVF / infertility, their waiting periods",
+  ),
+  lifestyle: TopicSectionSchema.default({ items: [], notMentioned: [] }).describe(
+    "Lifestyle care: diabetes, BP, cholesterol, thyroid, weight / obesity incl. bariatric, fatty liver, mental health, chronic-care or diet / weight / stress programmes, wellness coaching",
+  ),
+  checkupFrequency: z
+    .object({
+      label: z.string().describe("e.g. 'Once every policy year' or 'Every 3 claim-free years'"),
+      everyYear: z.boolean(),
+      sourcePage: z.number().int(),
+    })
+    .nullable()
+    .default(null)
+    .describe("How often the free health check-up can be used; null if there is no check-up"),
   redFlags: z.array(RedFlagSchema),
   contacts: z.array(z.object({ purpose: z.string(), value: z.string(), sourcePage: z.number().int() })),
   ambiguities: z.array(z.object({ wording: z.string(), questionForInsurer: z.string(), sourcePage: z.number().int() })),

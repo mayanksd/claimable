@@ -17,7 +17,15 @@ const GROUPS: { key: Extraction["perks"][number]["category"]; title: string }[] 
 const grid = "grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3";
 
 /** "Use these this week" (top 3, easy first) + "Show all perks (N)" for the rest, grouped by category. */
-export function PerkGrid({ perks, policyText }: { perks: Extraction["perks"]; policyText: string }) {
+type Props = {
+  perks: Extraction["perks"];
+  policyText: string;
+  claimed: Set<string>;
+  onToggleClaimed: (id: string) => void;
+  checkupResetNote: string | null;
+};
+
+export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupResetNote }: Props) {
   const [open, setOpen] = useState(false);
   const [planFor, setPlanFor] = useState<string | null>(null);
 
@@ -27,6 +35,9 @@ export function PerkGrid({ perks, policyText }: { perks: Extraction["perks"]; po
       key={p.id}
       perk={p}
       maxOpen={planFor === p.id}
+      claimed={claimed.has(p.id)}
+      onToggleClaimed={() => onToggleClaimed(p.id)}
+      resetNote={checkupResetNote}
       onMaxCheckup={isCheckupPerk(p) ? () => setPlanFor((id) => (id === p.id ? null : p.id)) : undefined}
     />
   );

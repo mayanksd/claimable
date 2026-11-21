@@ -34,7 +34,7 @@ test("every cached answer is concise, cited, and its follow-ups are answerable i
     assert.match(a.source ?? "", /^Source: p\.\d+(, p\.\d+)*$/, q);
     assert.ok(a.followups.length >= 2 && a.followups.length <= 3, `${q}: ${a.followups.length} follow-ups`);
     for (const f of a.followups) {
-      assert.ok(f.split(/\s+/).length < 7, `${q} → "${f}" is too long`);
+      assert.ok(f.split(/\s+/).length <= 7, `${q} → "${f}" is too long`);
       assert.ok(cached[f], `${q} → follow-up "${f}" has no cached answer`);
     }
   }

@@ -5,7 +5,7 @@ import { ExtractionSchema } from "@/lib/schema";
 import { withSourcesOnly } from "@/lib/extraction";
 import { demoEvents } from "@/lib/demoEvents";
 import { MAX_PDF_BYTES, MAX_SCREENS, MAX_UPLOAD_BYTES, SCANNED_PDF_MESSAGE, mb, pdfTooBigMessage } from "@/lib/limits";
-import type { AnalyzeEvent } from "@/lib/analysis";
+import { notHealthMessage, type AnalyzeEvent } from "@/lib/analysis";
 import { pdfToMarkedText } from "@/lib/server/pdf";
 import { loadPrompt } from "@/lib/server/prompts";
 
@@ -82,6 +82,11 @@ export async function POST(req: Request) {
         system: loadPrompt("extract"),
         messages: [{ role: "user", content: [{ type: "text", text: redacted.text }, ...images] }],
       });
+      const notHealth = notHealthMessage(object.documentType);
+      if (notHealth) {
+        yield { type: "error", message: notHealth };
+        return;
+      }
       const extraction = withSourcesOnly(object);
       if (!screens.length) extraction.rewards = null;
       yield {

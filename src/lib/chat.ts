@@ -27,3 +27,9 @@ export function withCheckupChip(question: string, answer: string, followups: str
   if (followups.some((f) => norm(f) === norm(MAX_CHECKUP_CHIP))) return followups;
   return [MAX_CHECKUP_CHIP, ...followups].slice(0, 3);
 }
+
+/** A follow-up the assistant asks the user (e.g. "Which city is the hospital in?"): fill the input instead of sending. */
+export function chipPrefill(chip: string): string | null {
+  if (/^which city\b/i.test(chip.trim())) return "The hospital is in ";
+  return null;
+}

@@ -43,7 +43,10 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - `PerkGrid` / `PerkCard` — "Use these this week": top 3 `use_now` perks: biggest ₹ first (Easy before Needs a claim on a tie), last slot for the best unlimited/free perk; tag "Easy" / "Needs a claim"; "Show all perks (N)" expands the rest grouped by `category`.
 - `CheckupPlanner` — "Max my ₹X →" on the health check-up card: full-body base + add-ons up to the policy limit, running total bar; prices in `src/data/test-prices.ts`; only tests from the policy's list if it has one. No medical advice.
 - `MoneyBack` — `moneyBack` items (e.g. "Walk 8,000 steps a day → 10% off renewal") + coin ring / redeem now / next item when a rewards screenshot was given. Hidden if neither.
-- `WatchOut` — collapsed by default; severity colour (high = red, medium = amber), title, why, page.
+- Tabs under the hero: Perks (default: claimed counter, top perks, optional covers, money back) | Planning a family? (`family`) | Lifestyle care (`lifestyle`, "Covered from <date>" for waits) | Watch out (red "N serious" badge). Each tab has its own empty state.
+- `WatchOut` — severity colour (high = red, medium = amber), title, why, page; adds a flag when `checkupFrequency.everyYear` is false.
+- Extraction extras: `documentType` (non-health → stop with a message; `group_health` → "Employer policy" badge), `isScheduleIncluded` (false → soft banner), `optionalCovers` ("Optional — check your schedule"), `policy.startDate` (check-up reset nudge).
+- "Mark claimed" toggle per perk + "₹X of ₹Y claimed" bar (localStorage, per policy).
 - `ChatPanel` — "Talk to your policy", sticky right column; 3 starter chips, then the latest answer's follow-ups + "Ask something else"; messages render a verdict pill only if line 1 is exactly COVERED / PARTLY COVERED / NOT COVERED / NOT IN YOUR DOCUMENTS, then the markdown body, then the source line; the `FOLLOWUPS:` line becomes chips.
 - Motion: cards stagger in (50 ms), hero counter 1.2 s, skeletons while loading.
 

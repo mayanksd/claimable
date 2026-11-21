@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Extraction } from "@/lib/schema";
-import { MAX_QUESTION_CHARS, STARTERS, withCheckupChip } from "@/lib/chat";
+import { MAX_QUESTION_CHARS, STARTERS, chipPrefill, withCheckupChip } from "@/lib/chat";
 import { parseAnswer } from "@/lib/answer";
 import { chatErrorMessage, createChatTransport } from "@/lib/client/chatTransport";
 import { AnswerBubble, ErrorBubble, QuestionBubble, TypingBubble } from "./AnswerBubble";
@@ -86,7 +86,12 @@ export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
             key={q}
             type="button"
             disabled={busy}
-            onClick={() => ask(q)}
+            onClick={() => {
+              const prefill = chipPrefill(q);
+              if (prefill === null) return ask(q);
+              setInput(prefill);
+              inputRef.current?.focus();
+            }}
             className="cursor-pointer rounded-full border border-brand-line bg-brand-soft px-2.5 py-1.5 text-xs font-semibold text-brand hover:bg-brand-line/50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {q}

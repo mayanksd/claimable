@@ -9,16 +9,18 @@
   "Documents needed for a claim?": "The claim form, original bills, prescriptions and the discharge summary.\nSource: p.3\nFOLLOWUPS: Claim deadline? | Claims email?",
   "Is air ambulance covered?": "COVERED\nUp to **₹2,50,000** a year, for life-threatening emergencies, with pre-approval.\nSource: p.2\nFOLLOWUPS: Air ambulance number? | Road ambulance limit?",
   "Road ambulance limit?": "Up to **₹3,000** per hospitalisation.\nSource: p.2\nFOLLOWUPS: Is air ambulance covered? | Emergency number?",
-  "Tooth extraction covered?": "PARTLY COVERED\nYes, up to **₹10,000 a year** under OPD dental, as reimbursement only.\nSource: p.2, p.3\nFOLLOWUPS: Root canal covered? | Dental waiting period? | How do I claim dental?",
+  "Tooth extraction covered?": "PARTLY COVERED\nYes, up to **₹10,000 a year** under OPD dental, as reimbursement only.\nSource: p.2, p.3\nFOLLOWUPS: Root canal covered? | Will using OPD reduce my cover? | How do I claim dental?",
   "Root canal covered?": "PARTLY COVERED\nYes, within the same **₹10,000 a year** OPD dental limit, as reimbursement.\nSource: p.2\nFOLLOWUPS: Fillings and scaling covered? | Cosmetic dentistry covered? | How do I claim dental?",
   "Fillings and scaling covered?": "PARTLY COVERED\nYes, within the same **₹10,000 a year** OPD dental limit, as reimbursement.\nSource: p.2\nFOLLOWUPS: Root canal covered? | Cosmetic dentistry covered? | How do I claim dental?",
   "Cosmetic dentistry covered?": "NOT COVERED\nNo, cosmetic dentistry is excluded.\nSource: p.2, p.4\nFOLLOWUPS: Root canal covered? | Dental waiting period?",
   "Dental waiting period?": "**90 days** from your policy start date.\nSource: p.4\nFOLLOWUPS: Tooth extraction covered? | How do I claim dental?",
   "How do I claim dental?": "Pay the dentist, then submit the bill and prescription in the Aarogya app within **30 days**.\nSource: p.3\nFOLLOWUPS: Documents needed for a claim? | Claims email?",
-  "Free health check-up?": "COVERED\nOne check-up each policy year, up to **₹10,000**, cashless at partner labs.\nSource: p.2\nFOLLOWUPS: How do I max my check-up? | How do I book it? | Does an unused one carry over?",
+  "Free health check-up?": "COVERED\nOne check-up each policy year, up to **₹10,000**, cashless at partner labs.\nSource: p.2\nFOLLOWUPS: How do I max my check-up? | Does a check-up affect my no-claim bonus? | How do I book it?",
   "How do I book it?": "Book it in the **Aarogya app** at a partner diagnostic centre.\nSource: p.2\nFOLLOWUPS: How do I max my check-up? | Does an unused one carry over? | Teleconsult a doctor?",
   "Does an unused one carry over?": "NOT IN YOUR DOCUMENTS\nThe policy says once per policy year but not whether a skipped one carries over. Ask on **1800 000 1234**.\nSource: p.2\nFOLLOWUPS: How do I max my check-up? | How do I book it?",
   "Teleconsult a doctor?": "COVERED\nYes, **unlimited** GP and specialist teleconsults, 24×7 in the Aarogya app.\nSource: p.2\nFOLLOWUPS: Doctor visits covered? | Free health check-up?",
-  "Doctor visits covered?": "PARTLY COVERED\nUp to **₹5,000 a year** for consultations, tests and medicines without admission, as reimbursement.\nSource: p.2\nFOLLOWUPS: Documents needed for a claim? | Teleconsult a doctor?",
-  "How do I max my check-up?": "Your check-up limit is **₹10,000** a year. Tap **Max my ₹10,000** on your check-up card to plan tests up to that limit.\nSource: p.2\nFOLLOWUPS: How do I book it? | Does an unused one carry over? | Teleconsult a doctor?"
+  "Doctor visits covered?": "PARTLY COVERED\nUp to **₹5,000 a year** for consultations, tests and medicines without admission, as reimbursement.\nSource: p.2\nFOLLOWUPS: Will using OPD reduce my cover? | Documents needed for a claim? | Teleconsult a doctor?",
+  "How do I max my check-up?": "Your check-up limit is **₹10,000** a year. Tap **Max my ₹10,000** on your check-up card to plan tests up to that limit.\nSource: p.2\nFOLLOWUPS: How do I book it? | Does an unused one carry over? | Teleconsult a doctor?",
+  "Does a check-up affect my no-claim bonus?": "NOT IN YOUR DOCUMENTS\nYour policy doesn't mention a no-claim bonus. The check-up is a yearly benefit you're meant to use; to be sure, ask **1800 000 1234**.\nSource: p.2, p.3\nFOLLOWUPS: How do I max my check-up? | How do I book it?",
+  "Will using OPD reduce my cover?": "OPD has its own limit of **₹5,000 a year**; the policy doesn't say it reduces your ₹10,00,000 sum insured. To be sure, ask **1800 000 1234**.\nSource: p.2, p.3\nFOLLOWUPS: Doctor visits covered? | Documents needed for a claim?"
 }

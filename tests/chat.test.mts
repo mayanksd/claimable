@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { MAX_CHECKUP_CHIP, withCheckupChip } from "../src/lib/chat.ts";
+import { MAX_CHECKUP_CHIP, chipPrefill, withCheckupChip } from "../src/lib/chat.ts";
 import { parseAnswer } from "../src/lib/answer.ts";
 
 test("check-up answer without the chip gets it first, still max 3", () => {
@@ -26,4 +26,9 @@ test("every cached check-up answer already offers the max chip", () => {
     if (q === MAX_CHECKUP_CHIP || !/check-?\s?up/i.test(q + a.body)) continue;
     assert.ok(a.followups.includes(MAX_CHECKUP_CHIP), q);
   }
+});
+
+test("'Which city is the hospital in?' fills the input instead of sending", () => {
+  assert.equal(chipPrefill("Which city is the hospital in?"), "The hospital is in ");
+  assert.equal(chipPrefill("Emergency number?"), null);
 });
