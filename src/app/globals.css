@@ -15,7 +15,7 @@
   --secondary: #f1f5f9;
   --secondary-foreground: #0f172a;
   --muted: #f8fafc;
-  --muted-foreground: #64748b;
+  --muted-foreground: #526075;
   --accent: #eef2ff;
   --accent-foreground: #4f46e5;
   --destructive: #dc2626;
@@ -27,19 +27,19 @@
   --brand-2: #7c3aed;
   --brand-soft: #eef2ff;
   --brand-line: #c7d2fe;
-  --good: #059669;
+  --good: #047857;
   --good-soft: #ecfdf5;
   --good-line: #a7f3d0;
   --good-ink: #065f46;
-  --warn: #d97706;
+  --warn: #b45309;
   --warn-soft: #fffbeb;
   --warn-line: #fde68a;
-  --bad: #dc2626;
+  --bad: #b91c1c;
   --bad-soft: #fef2f2;
 
   /* Warm accent for wins and CTAs */
-  --warm: #ff7a59;
-  --warm-2: #ff4f7b;
+  --warm: #e4572e;
+  --warm-2: #d9366a;
   --warm-soft: #fff1eb;
   --warm-line: #ffd2c2;
   --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 30px -14px rgb(79 70 229 / 0.25);

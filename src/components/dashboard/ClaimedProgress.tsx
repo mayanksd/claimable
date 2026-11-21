@@ -15,7 +15,7 @@ export function ClaimedProgress({ claimed, total }: { claimed: number; total: nu
             Used a perk? Tap <b className="text-foreground">Mark claimed</b> and watch this fill up 💪
           </span>
         )}
-        {claimed >= total && <span className="text-[13px] font-semibold text-good">All claimed 🎉</span>}
+        {claimed >= total && <span className="text-sm font-semibold text-good">All claimed 🎉</span>}
       </div>
       <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
         <i className="block h-full rounded-full bg-good transition-all duration-500" style={{ width: `${pct}%` }} />

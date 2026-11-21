@@ -71,7 +71,7 @@ export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupR
             type="button"
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
-            className="mt-3.5 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border bg-white py-2.5 text-sm font-semibold text-brand hover:bg-brand-soft"
+            className="mt-3.5 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border bg-white py-3 text-sm font-semibold text-brand hover:bg-brand-soft"
           >
             {open ? "Show fewer perks" : `Show all perks (${perks.length})`}
             <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />

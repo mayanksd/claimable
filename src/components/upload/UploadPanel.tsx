@@ -136,9 +136,9 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
               <br />
               <span className="bg-gradient-to-r from-brand via-brand-2 to-warm bg-clip-text text-transparent">Start using them.</span>
             </h1>
-            <p className="mt-3 text-lg font-medium text-muted-foreground sm:text-xl">See what you&apos;re owed in 20 seconds.</p>
+            <p className="mt-3 text-xl font-medium text-muted-foreground">See what you&apos;re owed in 20 seconds.</p>
 
-            <ul className="mx-auto mt-7 mb-7 grid max-w-[540px] gap-3 text-left text-[15px] sm:text-base">
+            <ul className="mx-auto mt-7 mb-7 grid max-w-[540px] gap-3 text-left text-base sm:text-base">
               <li className="flex items-center gap-3.5">
                 <EmojiCircle emoji="🩺" tone="bg-warm-soft" />
                 <span>
@@ -208,7 +208,7 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
                   hint={`up to ${MAX_SCREENS}`}
                 />
               )}
-              <div className="text-[13px] text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
                 {busy === "adding" ? (
                   "Preparing screenshots…"
                 ) : (
@@ -228,10 +228,10 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
             )}
 
             <div className="mt-6 flex flex-col items-center gap-2">
-              <Button variant="hero" size="lg" className="h-14 rounded-2xl px-9 text-lg" disabled={(!policy && !demo) || !!busy} onClick={analyze}>
+              <Button variant="hero" size="lg" className="h-14 rounded-2xl px-9 text-xl" disabled={(!policy && !demo) || !!busy} onClick={analyze}>
                 Find my perks →
               </Button>
-              {!policy && !demo && <p className="text-[13px] font-medium text-muted-foreground">Add your policy first</p>}
+              {!policy && !demo && <p className="text-sm font-medium text-muted-foreground">Add your policy first</p>}
               <Button variant="ghost" size="lg" onClick={loadSample} disabled={!!busy}>
                 ✨ Try with sample policy
               </Button>
@@ -241,7 +241,7 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
                 The sample is a fictional Aarogya policy. {demo && "Demo mode: no files are sent anywhere."}
               </p>
             )}
-            <p className="mx-auto mt-5 max-w-[520px] text-[12px] text-muted-foreground/80 italic">
+            <p className="mx-auto mt-5 max-w-[520px] text-xs text-muted-foreground italic">
               🔒 We mask your name, PAN, phone, email, address and policy number before AI reads anything. Files are never
               stored. Crop names out of screenshots.
             </p>
@@ -311,7 +311,7 @@ function SlotRow({ emoji, label, hint }: { emoji: string; label: string; hint: s
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-dashed border-brand-line bg-white/70 px-3 py-2.5 text-left text-muted-foreground">
       <EmojiCircle emoji={emoji} tone="bg-brand-soft" />
-      <span className="min-w-0 flex-1 text-[15px] font-semibold">{label}</span>
+      <span className="min-w-0 flex-1 text-base font-semibold">{label}</span>
       <small className="hidden shrink-0 text-xs sm:inline">{hint}</small>
     </div>
   );
@@ -329,7 +329,7 @@ function FileRow({ emoji, name, meta, onRemove }: { emoji: string; name: string;
       <b className="min-w-0 flex-1 truncate">{name}</b>
       <small className="shrink-0 font-semibold whitespace-nowrap text-good">{meta} ✓</small>
       {onRemove && (
-        <button type="button" onClick={onRemove} aria-label={`Remove ${name}`} className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary">
+        <button type="button" onClick={onRemove} aria-label={`Remove ${name}`} className="grid shrink-0 place-items-center rounded-full p-1.5 text-muted-foreground hover:bg-secondary max-sm:size-11">
           <X className="size-4" />
         </button>
       )}
@@ -344,7 +344,7 @@ function Step({ state, children }: { state: StepState; children: React.ReactNode
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
-      className={cn("flex items-center gap-3 text-[15px]", state === "run" ? "text-muted-foreground" : "text-foreground")}
+      className={cn("flex items-center gap-3 text-base", state === "run" ? "text-muted-foreground" : "text-foreground")}
     >
       <span
         className={cn(

@@ -43,28 +43,28 @@ export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxChecku
         claimed && "border-good-line bg-good-soft/40",
       )}
     >
-      <Badge variant="outline" className="absolute top-4 right-4">
-        p.{perk.sourcePage}
-      </Badge>
-      <div className="grid size-12 place-items-center rounded-full bg-warm-soft text-[26px] leading-none" aria-hidden>
-        {perk.emoji}
+      <div className="flex items-start justify-between gap-2">
+        <div className="grid size-12 place-items-center rounded-full bg-warm-soft text-[26px] leading-none" aria-hidden>
+          {perk.emoji}
+        </div>
+        <Badge variant="outline">p.{perk.sourcePage}</Badge>
       </div>
       {optional && (
         <Badge variant="warn" className="mt-2.5">
           Optional — check your schedule
         </Badge>
       )}
-      <h3 className="mt-3 mb-1 pr-10 text-[15px] font-bold">{perk.name}</h3>
-      <div className="text-[22px] font-extrabold">
+      <h3 className="mt-3 mb-1 text-base font-bold text-balance">{perk.name}</h3>
+      <div className="text-xl font-extrabold">
         {perk.capLabel} {freq && <small className="text-xs font-medium text-muted-foreground">{freq}</small>}
       </div>
-      <p className="mt-1.5 mb-2.5 text-[13px] text-muted-foreground">{perk.oneLiner}</p>
+      <p className="mt-1.5 mb-2.5 text-sm text-muted-foreground">{perk.oneLiner}</p>
       {isCheckup && (
-        <p className="mb-2.5 rounded-lg bg-good-soft px-2.5 py-2 text-[13px] text-good-ink">
+        <p className="mb-2.5 rounded-lg bg-good-soft px-2.5 py-2 text-sm text-good-ink">
           A basic full-body check-up costs about {inr(BASE_PACKAGE.priceInr)}. You have {inr(perk.capInr!)} — use all of it.
         </p>
       )}
-      {isCheckup && resetNote && <p className="mb-2.5 text-[12px] font-semibold text-warn">⏰ {resetNote}</p>}
+      {isCheckup && resetNote && <p className="mb-2.5 text-xs font-semibold text-warn">⏰ {resetNote}</p>}
       <div className="mt-auto flex flex-wrap items-center gap-2">
         {tag && <Badge variant={tag === "Easy" ? "good" : "default"}>{tag}</Badge>}
         {onToggleClaimed && !optional && (
@@ -73,7 +73,7 @@ export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxChecku
             onClick={onToggleClaimed}
             aria-pressed={!!claimed}
             className={cn(
-              "inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-bold transition-colors",
+              "inline-flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold transition-colors max-sm:min-h-11 max-sm:px-3.5",
               claimed ? "border-good bg-good text-white" : "text-muted-foreground hover:bg-secondary",
             )}
           >

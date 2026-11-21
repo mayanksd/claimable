@@ -29,11 +29,11 @@ export function CheckupPlanner({ limitInr, policyText, onClose }: { limitInr: nu
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-bold">Max your check-up</h3>
-          <p className="text-[13px] text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {source === "policy" ? "From your policy's test list" : "Common add-ons — confirm with your insurer"}
           </p>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close planner" className="rounded p-1 text-muted-foreground hover:bg-secondary">
+        <button type="button" onClick={onClose} aria-label="Close planner" className="grid shrink-0 place-items-center rounded-full p-1.5 text-muted-foreground hover:bg-secondary max-sm:size-11">
           <X className="size-4" />
         </button>
       </div>
@@ -42,7 +42,7 @@ export function CheckupPlanner({ limitInr, policyText, onClose }: { limitInr: nu
         <b>
           {inr(total)} <span className="font-medium text-muted-foreground">of {inr(limitInr)}</span>
         </b>
-        <span className={cn("text-[13px] font-semibold", left < 0 ? "text-bad" : "text-good")}>
+        <span className={cn("text-sm font-semibold", left < 0 ? "text-bad" : "text-good")}>
           {left < 0 ? `${inr(-left)} over` : left === 0 ? "All used 🎉" : `${inr(left)} left`}
         </span>
       </div>
@@ -71,10 +71,10 @@ export function CheckupPlanner({ limitInr, policyText, onClose }: { limitInr: nu
         })}
       </ul>
       {source === "policy" && addOns.length === 0 && (
-        <p className="mt-2 text-[13px] text-muted-foreground">None of the common add-ons appear in your policy&apos;s list; ask your insurer what&apos;s included.</p>
+        <p className="mt-2 text-sm text-muted-foreground">None of the common add-ons appear in your policy&apos;s list; ask your insurer what&apos;s included.</p>
       )}
 
-      <p className="mt-4 text-[11px] text-muted-foreground">Prices are approximate. Ask your doctor which tests suit you.</p>
+      <p className="mt-4 text-xs text-muted-foreground">Prices are approximate. Ask your doctor which tests suit you.</p>
     </Card>
   );
 }
@@ -99,7 +99,7 @@ function Row(props: {
         onClick={onToggle}
         title={disabled ? "Doesn't fit in what's left" : undefined}
         className={cn(
-          "flex w-full items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left text-[13px] transition-colors",
+          "flex w-full items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors",
           checked ? "border-good-line bg-good-soft" : "bg-white hover:bg-secondary",
           locked ? "cursor-default" : "cursor-pointer",
           disabled && "cursor-not-allowed opacity-50",

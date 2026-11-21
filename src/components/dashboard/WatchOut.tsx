@@ -30,7 +30,7 @@ export function WatchOut({ flags }: { flags: Flag[] }) {
   }
   return (
     <div className="grid gap-2.5">
-      <p className="text-[13px] text-muted-foreground">Rare, but they hurt at claim time.</p>
+      <p className="text-sm text-muted-foreground">Rare, but they hurt at claim time.</p>
       {flags.map((f) => (
         <div
           key={f.id}
@@ -42,7 +42,7 @@ export function WatchOut({ flags }: { flags: Flag[] }) {
           <span aria-hidden>{f.emoji}</span>
           <div>
             <b className="block">{f.title}</b>
-            <span className="text-[13px] text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               {f.why} (p.{f.sourcePage})
             </span>
           </div>

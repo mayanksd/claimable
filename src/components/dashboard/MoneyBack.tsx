@@ -23,7 +23,7 @@ export function MoneyBack({ moneyBack, rewards }: Props) {
             </span>
             <div className="min-w-0 flex-1">
               <b className="block">{m.title}</b>
-              <span className="text-[13px] text-muted-foreground">{m.detail}</span>
+              <span className="text-sm text-muted-foreground">{m.detail}</span>
             </div>
             <Badge variant="outline">p.{m.sourcePage}</Badge>
           </div>
@@ -53,7 +53,7 @@ function Coins({ rewards, divider, note }: { rewards: NonNullable<Extraction["re
         <div className="grid size-[86px] place-items-center rounded-full bg-white text-center text-xl font-extrabold">
           <div>
             {n(coinBalance)}
-            <small className="block text-[11px] font-semibold text-muted-foreground">coins</small>
+            <small className="block text-xs font-semibold text-muted-foreground">coins</small>
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@ function Coins({ rewards, divider, note }: { rewards: NonNullable<Extraction["re
               <div
                 key={item.name}
                 className={cn(
-                  "rounded-xl border px-3 py-2.5 text-[13px]",
+                  "rounded-xl border px-3 py-2.5 text-sm",
                   now && "border-good-line bg-good-soft",
                   isNext && "border-warn-line bg-warn-soft",
                   !item.available && "opacity-50",
@@ -84,7 +84,7 @@ function Coins({ rewards, divider, note }: { rewards: NonNullable<Extraction["re
             );
           })}
         </div>
-        {note && programmeNote && <div className="mt-2.5 text-[13px] text-muted-foreground">{programmeNote}</div>}
+        {note && programmeNote && <div className="mt-2.5 text-sm text-muted-foreground">{programmeNote}</div>}
       </div>
     </div>
   );

@@ -43,18 +43,18 @@ export function TopicTab({ section, intro, emptyText }: Props) {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <b>{i.title}</b>
-                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", STATUS[i.status].className)}>
+                <span className={cn("rounded-full px-2 py-0.5 text-xs font-bold", STATUS[i.status].className)}>
                   {i.status === "waiting" && i.coveredFrom ? `Covered from ${i.coveredFrom}` : STATUS[i.status].label}
                 </span>
               </div>
-              <div className="text-[13px] text-muted-foreground">{i.detail}</div>
+              <div className="text-sm text-muted-foreground">{i.detail}</div>
             </div>
             <Badge variant="outline">p.{i.sourcePage}</Badge>
           </li>
         ))}
       </ul>
       {notMentioned.length > 0 && (
-        <p className="text-[13px] text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Your policy doesn&apos;t mention: {notMentioned.join(", ")} — ask your insurer.
         </p>
       )}

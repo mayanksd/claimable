@@ -35,7 +35,7 @@ export function Tabs({ tabs, active, onChange }: { tabs: TabDef[]; active: strin
             if (e.key === "ArrowLeft") move(i - 1);
           }}
           className={cn(
-            "relative flex shrink-0 cursor-pointer items-center gap-1.5 px-3.5 pt-2 pb-3 text-[15px] font-semibold whitespace-nowrap transition-colors",
+            "relative flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 px-3.5 pt-2 pb-3 text-base font-semibold whitespace-nowrap transition-colors",
             active === t.id ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           )}
         >

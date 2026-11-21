@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Extraction } from "@/lib/schema";
 import { MAX_QUESTION_CHARS, STARTERS, chipPrefill, withCheckupChip } from "@/lib/chat";
+import { cn } from "@/lib/utils";
+
+const STARTER_EMOJI = ["🚨", "🦷", "🩺"];
 import { parseAnswer } from "@/lib/answer";
 import { chatErrorMessage, createChatTransport } from "@/lib/client/chatTransport";
 import { AnswerBubble, ErrorBubble, QuestionBubble, TypingBubble } from "./AnswerBubble";
@@ -49,8 +52,9 @@ export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
   const lastAnswer = messages.findLast((m) => m.role === "assistant");
   const started = !!lastAnswer;
   const lastQuestion = messages.findLast((m) => m.role === "user");
+  // Starters live in the welcome card; the chip bar is for follow-ups once a conversation exists.
   const chips = !started
-    ? STARTERS
+    ? []
     : busy && last === lastAnswer
       ? []
       : (() => {
@@ -59,16 +63,37 @@ export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
         })();
 
   return (
-    <Card className="flex h-[600px] flex-col overflow-hidden p-0 lg:sticky lg:top-[76px] lg:h-[calc(100vh-100px)]">
+    <Card id="chat" className="flex h-[600px] scroll-mt-20 flex-col overflow-hidden p-0 lg:sticky lg:top-[76px] lg:h-[calc(100vh-100px)]">
       <header className="border-b px-[18px] py-4 font-bold">
         Talk to your policy
         <small className="block text-xs font-medium text-muted-foreground">Answers only from your documents, with the page</small>
       </header>
 
       <div ref={list} className="flex flex-1 flex-col gap-3 overflow-y-auto p-4" aria-live="polite">
-        <div className="max-w-[92%] self-start rounded-[14px] rounded-bl-[4px] border bg-muted px-3.5 py-3 text-sm">
-          👋 Hi! Ask me anything about your {extraction.policy.product} policy, or tap a question below.
-        </div>
+        {!started && !busy && (
+          <div className="m-auto flex w-full max-w-[320px] flex-col items-center py-4 text-center">
+            <span aria-hidden className="grid size-14 place-items-center rounded-full bg-warm-soft text-[28px] leading-none">
+              💬
+            </span>
+            <h3 className="mt-3 text-xl font-bold">Ask your policy anything</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Short answers from your {extraction.policy.product} documents, with the page. Try one:
+            </p>
+            <div className="mt-5 grid w-full gap-2">
+              {STARTERS.map((q, i) => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => ask(q)}
+                  className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl border border-brand-line bg-brand-soft px-3.5 text-left text-sm font-semibold text-brand transition-all hover:-translate-y-0.5 hover:shadow-md motion-reduce:transform-none"
+                >
+                  <span aria-hidden>{STARTER_EMOJI[i] ?? "💡"}</span>
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {messages.map((m) => {
           const text = textOf(m);
           if (m.role === "user") return <QuestionBubble key={m.id} text={text} />;
@@ -80,7 +105,7 @@ export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
         {error && <ErrorBubble text={chatErrorMessage(error)} />}
       </div>
 
-      <div className="flex flex-wrap gap-2 border-t px-4 py-2.5">
+      <div className={cn("flex flex-wrap gap-2 border-t px-4 py-2.5", !started && "hidden")}>
         {chips.map((q) => (
           <button
             key={q}
@@ -92,7 +117,7 @@ export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
               setInput(prefill);
               inputRef.current?.focus();
             }}
-            className="cursor-pointer rounded-full border border-brand-line bg-brand-soft px-2.5 py-1.5 text-xs font-semibold text-brand hover:bg-brand-line/50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-9 cursor-pointer rounded-full border border-brand-line bg-brand-soft px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-line/50 disabled:cursor-not-allowed disabled:opacity-50 max-sm:min-h-11"
           >
             {q}
           </button>
@@ -101,7 +126,7 @@ export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
           <button
             type="button"
             onClick={() => inputRef.current?.focus()}
-            className="flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-secondary"
+            className="flex min-h-9 cursor-pointer items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-secondary max-sm:min-h-11"
           >
             <MessageCircle className="size-3.5" /> Ask something else
           </button>
