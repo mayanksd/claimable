@@ -1,4 +1,4 @@
-# Policy Perks — build brief for Claude Code
+# Claimable — build brief for Claude Code
 
 Hackathon MVP (Razorpay Rize x AILC "Fix My Itch", 21 Nov). Live demo. Build time on the day: 2–3 hours, so keep it small.
 
@@ -19,8 +19,8 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - No database, no auth. Last result kept in React state + localStorage.
 
 ## Files provided
-- `lib/schema.ts` → copy to `src/lib/schema.ts` (Zod schema for extraction)
-- `lib/redact.ts` → copy to `src/lib/redact.ts`
+- `src/lib/schema.ts` (Zod schema for extraction; moved from `lib/`)
+- `src/lib/redact.ts` (moved from `lib/`)
 - `prompts/extract.md`, `prompts/chat.md` → system prompts (load as strings)
 - `demo/aarogya-policy.pdf`, `demo/rewards-screenshot.png` → FICTIONAL demo inputs
 - `demo/extraction.json` → expected output / fallback for demo mode
