@@ -110,3 +110,50 @@ test("prompt: example is schema-valid; rules list the enums", () => {
   assert.ok(!sys.includes("```"), "no markdown fences in the prompt");
   assert.ok(sys.includes(JSON.stringify(SHAPE_EXAMPLE)));
 });
+
+import { PART_KEYS, buildPartSystem } from "../src/lib/extractionPrompt.ts";
+import { PART_B_PLACEHOLDER, PartASchema, PartBSchema, mergeParts } from "../src/lib/modelSchema.ts";
+import { parseWith } from "../src/lib/parseExtraction.ts";
+import { ExtractionSchema } from "../src/lib/schema.ts";
+
+const demoModel = () => {
+  const d = ExtractionSchema.parse(demo);
+  return {
+    ...d,
+    policy: { ...d.policy, startDate: d.policy.startDate ?? "" },
+    optionalCovers: [],
+    family: { ...d.family, items: d.family.items.map((i) => ({ ...i, coveredFrom: i.coveredFrom ?? "" })) },
+    lifestyle: { ...d.lifestyle, items: d.lifestyle.items.map((i) => ({ ...i, coveredFrom: i.coveredFrom ?? "" })) },
+    checkupFrequency: d.checkupFrequency ?? { label: "", everyYear: false, sourcePage: 0 },
+  };
+};
+const pick = (o: Record<string, unknown>, keys: readonly string[]) => Object.fromEntries(keys.map((k) => [k, o[k]]));
+
+test("split: parts A and B parse separately and merge back to demo/extraction.json", () => {
+  const m = demoModel();
+  const a = parseWith("```json\n" + JSON.stringify(pick(m, PART_KEYS.A)) + "\n```", PartASchema);
+  const b = parseWith(JSON.stringify(pick(m, PART_KEYS.B)) + "\nDone.", PartBSchema);
+  assert.ok(a.ok && b.ok);
+  assert.deepEqual(mergeParts(a.data, b.data), ExtractionSchema.parse(demo));
+  assert.deepEqual(Object.keys(a.data).sort(), [...PART_KEYS.A].sort(), "part A keeps only its keys");
+});
+
+test("split: dashboard can open on part A alone (B placeholder is empty, not invented)", () => {
+  const m = demoModel();
+  const a = parseWith(JSON.stringify(pick(m, PART_KEYS.A)), PartASchema);
+  assert.ok(a.ok);
+  const e = mergeParts(a.data, null);
+  assert.equal(e.perks.length, demo.perks.length);
+  assert.deepEqual(e.redFlags, []);
+  assert.deepEqual(e.family.items, []);
+  assert.equal(e.checkupFrequency, null);
+  assert.ok(PartBSchema.safeParse(PART_B_PLACEHOLDER).success);
+});
+
+test("split: each part's prompt shows only its own keys", () => {
+  const shapeOf = (sys: string) => JSON.parse(sys.slice(sys.lastIndexOf("Shape:\n") + 7));
+  assert.deepEqual(Object.keys(shapeOf(buildPartSystem("BASE", "A"))), [...PART_KEYS.A]);
+  assert.deepEqual(Object.keys(shapeOf(buildPartSystem("BASE", "B"))), [...PART_KEYS.B]);
+  assert.match(buildPartSystem("BASE", "B"), /This request covers only these keys: documentType, redFlags/);
+  assert.deepEqual([...PART_KEYS.A, ...PART_KEYS.B].sort(), Object.keys(SHAPE_EXAMPLE).sort(), "A + B cover every key");
+});

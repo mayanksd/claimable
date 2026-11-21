@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AnalysisResult } from "@/lib/analysis";
+import type { AnalysisResult, AnalyzeEvent } from "@/lib/analysis";
 import { compressImage } from "@/lib/client/compress";
 import { runAnalysis } from "@/lib/client/analyze";
 import { LIMIT_HINT, MAX_PDF_BYTES, MAX_SCREENS, MAX_UPLOAD_BYTES, fileSize, mb, pdfTooBigMessage } from "@/lib/limits";
 import { cn } from "@/lib/utils";
 import { ErrorText } from "@/components/ErrorDetail";
+import { FunFact, LoadingHeadline } from "./LoadingCopy";
 
 type StepState = "todo" | "run" | "done";
 type Progress = {
@@ -24,12 +25,24 @@ const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? o
 const kindLabel = (k: string) => (k === k.toUpperCase() ? k : k.toLowerCase());
 const isPdf = (f: File) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
 
-export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: AnalysisResult) => void }) {
+type UpdateEvent = Extract<AnalyzeEvent, { type: "update" }>;
+
+type Props = {
+  demo: boolean;
+  onDone: (r: AnalysisResult) => void;
+  /** Part B arrived after the dashboard opened. */
+  onUpdate: (u: UpdateEvent) => void;
+  /** Shown on arrival, e.g. "This looks like pet insurance…" found after the dashboard opened. */
+  initialError?: string | null;
+};
+
+export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Props) {
   const [policy, setPolicy] = useState<File | null>(null);
   const [screens, setScreens] = useState<File[]>([]);
   const [sample, setSample] = useState(false);
   const [busy, setBusy] = useState<"adding" | "analyzing" | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
+  const heldUpdate = useRef<((u: UpdateEvent) => boolean) | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
   const [progress, setProgress] = useState<Progress>(IDLE);
@@ -111,10 +124,34 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
           break;
         case "done": {
           const x = e.result.extraction;
-          setProgress((p) => ({ ...p, perks: { state: "done", perks: x.perks.length, flags: x.redFlags.length } }));
-          setTimeout(() => onDone({ ...e.result, sample: e.result.sample || sample }), 600);
+          // Red flags come with part B; while it's pending, only count perks.
+          setProgress((p) => ({
+            ...p,
+            perks: { state: "done", perks: x.perks.length, flags: e.result.pending ? undefined : x.redFlags.length },
+          }));
+          // Hold the result for the short "Done!" beat; an update arriving meanwhile is merged in.
+          let result: AnalysisResult | null = { ...e.result, sample: e.result.sample || sample };
+          heldUpdate.current = (u) => {
+            if (!result) return false;
+            if (u.notHealth) {
+              result = null;
+              setError(u.notHealth);
+              setProgress(IDLE);
+              setBusy(null);
+              return true;
+            }
+            result = u.extraction ? { ...result, extraction: u.extraction, pending: false } : { ...result, pending: false, partBFailed: true };
+            return true;
+          };
+          setTimeout(() => {
+            heldUpdate.current = null;
+            if (result) onDone(result);
+          }, 600);
           break;
         }
+        case "update":
+          if (!heldUpdate.current?.(e)) onUpdate(e);
+          break;
         case "error":
           setError(e.detail ? `${e.message}\n\nDetails: ${e.detail}` : e.message);
           setProgress(IDLE);
@@ -126,14 +163,7 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
 
   const analyzing = busy === "analyzing";
 
-  // Long policies can take a while: reassure after 20 s on the progress screen.
-  const [slow, setSlow] = useState(false);
-  useEffect(() => {
-    setSlow(false);
-    if (!analyzing) return;
-    const t = setTimeout(() => setSlow(true), 20_000);
-    return () => clearTimeout(t);
-  }, [analyzing]);
+
   const { read, masked, perks } = progress;
 
   return (
@@ -263,27 +293,11 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.3 }}
-            className="mx-auto mt-6 max-w-[480px] rounded-3xl border border-border/70 bg-white/80 p-6 text-left shadow-soft backdrop-blur sm:p-8"
+            className="mx-auto mt-6 max-w-[480px]"
           >
-            <div className="mb-5 flex items-center gap-3.5">
-              <EmojiCircle emoji="🔎" tone="bg-brand-soft" />
-              <div>
-                <h2 className="text-xl font-bold">Reading your policy…</h2>
-                <p className="text-sm text-muted-foreground">Hang tight, this takes about 20 seconds.</p>
-                <AnimatePresence>
-                  {slow && (
-                    <motion.p
-                      key="slow"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-1 text-sm font-semibold text-brand"
-                      role="status"
-                    >
-                      Long policy — reading carefully, up to a minute more…
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
+            <div className="rounded-3xl border border-border/70 bg-white/80 p-6 text-left shadow-soft backdrop-blur sm:p-8">
+            <div className="mb-5">
+              <LoadingHeadline />
             </div>
             <div className="grid gap-3" aria-live="polite">
               <AnimatePresence initial={false}>
@@ -304,7 +318,7 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
                 {perks.state !== "todo" && (
                   <Step key="perks" state={perks.state}>
                     {perks.state === "done"
-                      ? `Found ${plural(perks.perks ?? 0, "perk")} and ${plural(perks.flags ?? 0, "red flag")}`
+                      ? `Found ${plural(perks.perks ?? 0, "perk")}${perks.flags === undefined ? "" : ` and ${plural(perks.flags, "red flag")}`}`
                       : "Finding perks, limits and red flags…"}
                   </Step>
                 )}
@@ -315,6 +329,8 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
                 )}
               </AnimatePresence>
             </div>
+            </div>
+            <FunFact />
           </motion.div>
         )}
       </AnimatePresence>

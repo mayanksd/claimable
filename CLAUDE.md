@@ -30,14 +30,15 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - `POST /api/analyze` (multipart: `policy` PDF, `screens[]` images)
   1. `unpdf` → text per page, prefix each page with `[[PAGE n]]`
   2. `redact(text)` → `{ text, count, kinds }`
-  3. `generateText({ model, system: buildExtractionSystem(extractPrompt), messages, maxOutputTokens: 16000 })` → `parseExtraction(text)` (strip fences, outermost `{…}`, trailing-comma repair, defaults for missing fields, drop only broken list items, validate with `ExtractionModelSchema`) → `normalizeExtraction()` → `ExtractionSchema` shape. One retry with the validation issues if the answer is unusable and at least 45 s of `maxDuration` (120 s) remain.
-     **No structured outputs / strict tools for extraction:** the grammar for this schema is too large for the API to compile ("The compiled grammar is too large"). The JSON shape lives in the system prompt (`src/lib/extractionPrompt.ts`, a typed example + enum values generated from the schema).
+  3. Two parallel `generateText` calls (thinking `between_tools` + effort `low`, `maxOutputTokens` 8000): **A** = policy, hero, perks, moneyBack, optionalCovers, rewards (gets the screenshots), contacts; **B** = documentType, redFlags, family, lifestyle, ambiguities, checkupFrequency. Each: `buildPartSystem(extractPrompt, part)` → `parseWith(text, PartXSchema)` (fences, outermost `{…}`, trailing-comma repair, defaults, drop broken items) → one retry with the issues if ≥ 45 s of `maxDuration` (120 s) remain. `mergeParts(a, b)` → `normalizeExtraction()`.
+     The stream sends `done` as soon as A is back (`pending: true` → Family / Lifestyle / Watch out show skeletons), then `update` with the merged result (or `partBFailed`, or `notHealth` → back to upload). One `[analyze:timing]` JSON log line per request: pdf, redact, model/parse per part, tokens.
+     **No structured outputs / strict tools for extraction:** the grammar for this schema is too large for the API to compile. The JSON shape lives in the system prompt (`src/lib/extractionPrompt.ts`).
   4. Return `{ extraction, redactedText, redactions: { count, kinds } }`
 - `POST /api/chat` → `streamText` with `system = chatPrompt + "\n\nEXTRACTION JSON:\n" + json + "\n\nPOLICY TEXT:\n" + redactedText`; return `toUIMessageStreamResponse()` (AI SDK v5).
 - Demo mode: `?demo=1` or env `DEMO_MODE=1` → `/api/analyze` returns `demo/extraction.json` after a 2.5 s fake delay; chat returns cached answers when the question matches a chip.
 
 ## UI components
-- `UploadPanel` — dropzone (PDF + images), file chips, "Find my perks" button, progress steps (Reading → Protected N personal fields → Finding perks → Done).
+- `UploadPanel` — dropzone (PDF + images), file chips, "Find my perks" button; progress card with a rotating headline (`src/lib/loadingCopy.ts`, 5 s each, then a loop), the real step ticks, and a rotating "Did you know?" fact (6 s). No time estimates or apologies in loading copy.
 - `PrivacyBanner` — "🔒 N personal fields were masked before AI read your policy."
 - Greeting — "Hi <first name> 👋"; the name comes from `redact()` and goes to the browser only, never to the model.
 - `HeroValue` — "You're sitting on ₹X of perks this year 🎉" with count-up; ratio bars vs `policy.annualPremiumInr`; premium 0 (unknown) → "up to ₹X", no ratio.

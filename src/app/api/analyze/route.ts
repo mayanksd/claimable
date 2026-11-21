@@ -1,13 +1,15 @@
 import { generateText, type ModelMessage } from "ai";
+import type { z } from "zod";
 import { model } from "@/lib/ai";
 import { redact } from "@/lib/redact";
-import { normalizeExtraction } from "@/lib/modelSchema";
-import { parseExtraction } from "@/lib/parseExtraction";
-import { buildExtractionSystem } from "@/lib/extractionPrompt";
+import { PartASchema, PartBSchema, mergeParts, type PartA } from "@/lib/modelSchema";
+import { parseWith } from "@/lib/parseExtraction";
+import { buildPartSystem } from "@/lib/extractionPrompt";
+import type { Extraction } from "@/lib/schema";
 import { withSourcesOnly } from "@/lib/extraction";
 import { demoEvents } from "@/lib/demoEvents";
 import { MAX_PDF_BYTES, MAX_SCREENS, MAX_UPLOAD_BYTES, SCANNED_PDF_MESSAGE, mb, pdfTooBigMessage } from "@/lib/limits";
-import { notHealthMessage, type AnalyzeEvent } from "@/lib/analysis";
+import { notHealthMessage, type AnalysisResult, type AnalyzeEvent } from "@/lib/analysis";
 import { pdfToMarkedText } from "@/lib/server/pdf";
 import { loadPrompt } from "@/lib/server/prompts";
 import { describeError, showErrorDetail, statusOf } from "@/lib/server/errors";
@@ -16,8 +18,14 @@ export const runtime = "nodejs";
 // Vercel Hobby with fluid compute allows up to 300 s; long policies can need two model calls.
 export const maxDuration = 120;
 
-/** Room for the full JSON (≈3–5k tokens) plus any thinking the model does first. */
-const MAX_OUTPUT_TOKENS = 16000;
+/** Each part's JSON is ≈1.5–3k tokens; with thinking off this leaves plenty of room. */
+const MAX_OUTPUT_TOKENS = 8000;
+
+/**
+ * Extraction is reading + copying, not reasoning: no upfront thinking, low effort.
+ * Sonnet 5.5 rejects `thinking: disabled`; `between_tools` is its lowest setting (valid at low effort).
+ */
+const EXTRACTION_PROVIDER_OPTIONS = { anthropic: { thinking: { type: "between_tools" }, effort: "low" } } as const;
 /** Only retry if at least this much of the maxDuration budget is left for a second call. */
 const MIN_REMAINING_FOR_RETRY_MS = 45_000;
 
@@ -59,10 +67,12 @@ export async function POST(req: Request) {
     .slice(0, MAX_SCREENS);
 
   return streamEvents(async function* () {
+    const timing = new StageTimer();
+
     // 1. PDF → text per page with [[PAGE n]] markers
     let pdf: { text: string; pages: number };
     try {
-      pdf = await pdfToMarkedText(new Uint8Array(await policy.arrayBuffer()));
+      pdf = await timing.time("pdf", () => policy.arrayBuffer().then((b) => pdfToMarkedText(new Uint8Array(b))));
     } catch {
       yield { type: "error", message: "We couldn't read that PDF. Is it password-protected or damaged?" };
       return;
@@ -74,10 +84,10 @@ export async function POST(req: Request) {
     yield { type: "read", pages: pdf.pages, screens: screens.length };
 
     // 2. Mask personal data. Only the redacted text ever reaches the model.
-    const redacted = redact(pdf.text);
+    const redacted = await timing.time("redact", async () => redact(pdf.text));
     yield { type: "masked", count: redacted.count, kinds: redacted.kinds };
 
-    // 3. Structured extraction
+    // 3. Extraction: two parallel calls. A = Perks tab, B = the other tabs + document checks.
     const images = await Promise.all(
       screens.map(async (f) => ({
         type: "image" as const,
@@ -85,72 +95,164 @@ export async function POST(req: Request) {
         mediaType: f.type,
       })),
     );
-    try {
-      // Plain-text JSON, parsed and validated here. Structured outputs can't compile a grammar this size.
-      const system = buildExtractionSystem(loadPrompt("extract"));
-      const messages: ModelMessage[] = [{ role: "user", content: [{ type: "text", text: redacted.text }, ...images] }];
-      const ask = async () =>
-        (await generateText({ model, system, messages, maxOutputTokens: MAX_OUTPUT_TOKENS, maxRetries: 1 })).text;
+    const base = loadPrompt("extract");
+    const run = <T,>(part: "A" | "B", schema: z.ZodType<T>) =>
+      extractPart({ part, schema, base, policyText: redacted.text, images: part === "A" ? images : [], deadline, timing });
+    const partA = run("A", PartASchema);
+    const partB = settle(run("B", PartBSchema));
 
-      let answer = await ask();
-      let parsed = parseExtraction(answer);
-      // One retry with the problems spelled out, only if at least 45 s of maxDuration remain.
-      if (!parsed.ok && deadline - Date.now() >= MIN_REMAINING_FOR_RETRY_MS) {
-        console.warn(`[analyze] answer unusable, retrying once: ${parsed.issues.join("; ")}`);
-        messages.push(
-          { role: "assistant", content: answer },
-          {
-            role: "user",
-            content: `Fix these issues and return only JSON (a single object, no markdown):\n- ${parsed.issues.join("\n- ")}`,
-          },
-        );
-        answer = await ask();
-        parsed = parseExtraction(answer);
-      }
-      if (!parsed.ok) {
-        const detail = `Unusable AI answer: ${parsed.issues.join("; ")}`;
-        console.error(`[analyze] ${detail}\n--- answer start ---\n${answer.slice(0, 1500)}`);
-        yield {
-          type: "error",
-          message: "We couldn't make sense of the AI's answer for this policy. Please try again in a moment.",
-          ...(showErrorDetail() ? { detail } : {}),
-        };
-        return;
-      }
-      if (parsed.dropped.length || parsed.repaired) {
-        console.warn(`[analyze] parsed with fixes: repaired=${parsed.repaired} dropped=${parsed.dropped.join(", ")}`);
-      }
-      const object = parsed.data;
-      const notHealth = notHealthMessage(object.documentType);
+    const resultFor = (extraction: Extraction, extra: Partial<AnalysisResult> = {}): AnalysisResult => {
+      const e = withSourcesOnly(extraction);
+      if (!screens.length) e.rewards = null;
+      return {
+        extraction: e,
+        redactedText: redacted.text,
+        redactions: { count: redacted.count, kinds: redacted.kinds },
+        firstName: redacted.firstName,
+        ...extra,
+      };
+    };
+
+    let a: PartA;
+    try {
+      a = await partA;
+    } catch (err) {
+      timing.log({ outcome: "error-A" });
+      yield extractionError(err);
+      return;
+    }
+
+    // Part B already finished? Send everything at once; otherwise open the dashboard now.
+    const early = await Promise.race([partB, Promise.resolve(null)]);
+    if (early?.ok) {
+      const notHealth = notHealthMessage(early.value.documentType);
+      timing.log({ outcome: notHealth ? "not-health" : "done", order: "B-first" });
       if (notHealth) {
         yield { type: "error", message: notHealth };
         return;
       }
-      const extraction = withSourcesOnly(normalizeExtraction(object));
-      if (!screens.length) extraction.rewards = null;
-      yield {
-        type: "done",
-        result: {
-          extraction,
-          redactedText: redacted.text,
-          redactions: { count: redacted.count, kinds: redacted.kinds },
-          firstName: redacted.firstName,
-        },
-      };
-    } catch (err) {
-      const detail = describeError(err);
-      console.error(`[analyze] extraction failed: ${detail}`, err);
-      const status = statusOf(err);
-      yield {
-        type: "error",
-        message:
-          status === 401 || status === 403
-            ? "The AI key on this server was rejected (ANTHROPIC_API_KEY is invalid). Check it in your Vercel project settings, or try the sample with ?demo=1."
-            : "The AI couldn't read this policy just now. Please try again in a moment.",
-        ...(showErrorDetail() ? { detail } : {}),
-      };
+      yield { type: "done", result: resultFor(mergeParts(a, early.value)) };
+      return;
     }
+    if (early && !early.ok) {
+      timing.log({ outcome: "done-without-B" });
+      yield { type: "done", result: resultFor(mergeParts(a, null), { partBFailed: true }) };
+      return;
+    }
+    yield { type: "done", result: resultFor(mergeParts(a, null), { pending: true }) };
+
+    const b = await partB;
+    if (!b.ok) {
+      timing.log({ outcome: "done-without-B" });
+      yield { type: "update", partBFailed: true, ...(showErrorDetail() ? { detail: describeError(b.error) } : {}) };
+      return;
+    }
+    const notHealth = notHealthMessage(b.value.documentType);
+    timing.log({ outcome: notHealth ? "not-health" : "done", order: "A-first" });
+    if (notHealth) {
+      yield { type: "update", notHealth };
+      return;
+    }
+    yield { type: "update", extraction: resultFor(mergeParts(a, b.value)).extraction };
   });
+}
+
+/** Wall-clock per stage, logged as one JSON line so Vercel logs are easy to read. */
+class StageTimer {
+  private start = Date.now();
+  private stages: Record<string, number | string> = {};
+  async time<T>(stage: string, fn: () => Promise<T>): Promise<T> {
+    const t0 = Date.now();
+    try {
+      return await fn();
+    } finally {
+      this.stages[stage] = Date.now() - t0;
+    }
+  }
+  note(key: string, value: number | string) {
+    this.stages[key] = value;
+  }
+  log(extra: Record<string, string>) {
+    console.info(`[analyze:timing] ${JSON.stringify({ totalMs: Date.now() - this.start, ...this.stages, ...extra })}`);
+  }
+}
+
+const settle = <T,>(p: Promise<T>) =>
+  p.then(
+    (value) => ({ ok: true as const, value }),
+    (error: unknown) => ({ ok: false as const, error }),
+  );
+
+class UnusableAnswer extends Error {
+  constructor(part: string, issues: string[]) {
+    super(`Unusable AI answer (part ${part}): ${issues.join("; ")}`);
+  }
+}
+
+/** One part of the extraction: call, parse, one retry if time allows. Throws on failure. */
+async function extractPart<T>(o: {
+  part: "A" | "B";
+  schema: z.ZodType<T>;
+  base: string;
+  policyText: string;
+  images: { type: "image"; image: string; mediaType: string }[];
+  deadline: number;
+  timing: StageTimer;
+}): Promise<T> {
+  const system = buildPartSystem(o.base, o.part);
+  const messages: ModelMessage[] = [{ role: "user", content: [{ type: "text", text: o.policyText }, ...o.images] }];
+
+  const ask = async (label: string) => {
+    const t0 = Date.now();
+    const r = await generateText({
+      model,
+      system,
+      messages,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      maxRetries: 1,
+      providerOptions: EXTRACTION_PROVIDER_OPTIONS,
+    });
+    o.timing.note(`model${o.part}${label}Ms`, Date.now() - t0);
+    o.timing.note(`tokens${o.part}${label}`, `${r.usage.inputTokens ?? "?"} in / ${r.usage.outputTokens ?? "?"} out / ${r.finishReason}`);
+    return r.text;
+  };
+
+  let answer = await ask("");
+  let parsed = await o.timing.time(`parse${o.part}Ms`, async () => parseWith(answer, o.schema));
+  // One retry with the problems spelled out, only if at least 45 s of maxDuration remain.
+  if (!parsed.ok && o.deadline - Date.now() >= MIN_REMAINING_FOR_RETRY_MS) {
+    console.warn(`[analyze] part ${o.part} unusable, retrying once: ${parsed.issues.join("; ")}`);
+    messages.push(
+      { role: "assistant", content: answer },
+      { role: "user", content: `Fix these issues and return only JSON (a single object, no markdown):\n- ${parsed.issues.join("\n- ")}` },
+    );
+    answer = await ask("Retry");
+    parsed = parseWith(answer, o.schema);
+  }
+  if (!parsed.ok) {
+    console.error(`[analyze] part ${o.part}: ${parsed.issues.join("; ")}\n--- answer start ---\n${answer.slice(0, 1500)}`);
+    throw new UnusableAnswer(o.part, parsed.issues);
+  }
+  if (parsed.dropped.length || parsed.repaired) {
+    console.warn(`[analyze] part ${o.part} parsed with fixes: repaired=${parsed.repaired} dropped=${parsed.dropped.join(", ")}`);
+  }
+  return parsed.data;
+}
+
+function extractionError(err: unknown): AnalyzeEvent {
+  const detail = describeError(err);
+  console.error(`[analyze] extraction failed: ${detail}`, err);
+  const status = statusOf(err);
+  return {
+    type: "error",
+    message:
+      err instanceof UnusableAnswer
+        ? "We couldn't make sense of the AI's answer for this policy. Please try again in a moment."
+        : status === 401 || status === 403
+          ? "The AI key on this server was rejected (ANTHROPIC_API_KEY is invalid). Check it in your Vercel project settings, or try the sample with ?demo=1."
+          : "The AI couldn't read this policy just now. Please try again in a moment.",
+    ...(showErrorDetail() ? { detail } : {}),
+  };
 }
 
 function streamEvents(gen: () => AsyncGenerator<AnalyzeEvent>): Response {

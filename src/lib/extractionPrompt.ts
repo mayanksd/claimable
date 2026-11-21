@@ -111,8 +111,10 @@ const ALLOWED = [
   `family.items[].status and lifestyle.items[].status: ${familyStatus.join(" | ")}`,
 ].join("\n");
 
-const OUTPUT_RULES = `Output format
-Return ONLY a single JSON object matching this shape. No markdown fences, no text before or after it.
+const outputRules = (shape: object, onlyKeys?: readonly string[]) => `Output format
+Return ONLY a single JSON object matching this shape. No markdown fences, no text before or after it.${
+  onlyKeys ? `\nThis request covers only these keys: ${onlyKeys.join(", ")}. Leave every other part of the policy out.` : ""
+}
 Every key shown is required. Use the example only for its shape and value types, never for its content.
 - perks[].capInr: a number, or null when the cap isn't a rupee amount (unlimited, a percentage, a count).
 - rewards: null if no app screenshot was provided; rewards.nextItem and rewards.programmeNote may be null.
@@ -124,6 +126,19 @@ Allowed values
 ${ALLOWED}
 
 Shape:
-${JSON.stringify(SHAPE_EXAMPLE)}`;
+${JSON.stringify(shape)}`;
 
-export const buildExtractionSystem = (basePrompt: string) => `${basePrompt.trim()}\n\n${OUTPUT_RULES}`;
+export const buildExtractionSystem = (basePrompt: string) => `${basePrompt.trim()}\n\n${outputRules(SHAPE_EXAMPLE)}`;
+
+/** Keys returned by each of the two parallel extraction calls (must match PartASchema / PartBSchema). */
+export const PART_KEYS = {
+  A: ["isScheduleIncluded", "policy", "perks", "heroValue", "rewards", "moneyBack", "optionalCovers", "contacts"],
+  B: ["documentType", "redFlags", "family", "lifestyle", "ambiguities", "checkupFrequency"],
+} as const satisfies Record<"A" | "B", readonly (keyof ExtractionModelOutput)[]>;
+
+const pick = (keys: readonly (keyof ExtractionModelOutput)[]) =>
+  Object.fromEntries(keys.map((k) => [k, SHAPE_EXAMPLE[k]]));
+
+/** System prompt for one part of the split extraction: same rules, a shape with only that part's keys. */
+export const buildPartSystem = (basePrompt: string, part: "A" | "B") =>
+  `${basePrompt.trim()}\n\n${outputRules(pick(PART_KEYS[part]), PART_KEYS[part])}`;

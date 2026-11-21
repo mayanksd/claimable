@@ -19,6 +19,8 @@ import { ClaimedProgress } from "./ClaimedProgress";
 import { TopicTab } from "./TopicTab";
 import { WatchOut, watchOutFlags } from "./WatchOut";
 import { Tabs } from "./Tabs";
+import { TabLoading, TabUnavailable } from "./TabLoading";
+import { Loader2 } from "lucide-react";
 
 type Props = {
   extraction: Extraction;
@@ -29,11 +31,14 @@ type Props = {
   cachedAnswers: Record<string, string>;
   /** First reveal of a fresh result: confetti once. */
   celebrate?: boolean;
+  /** Family / lifestyle / watch-out data still loading (part B). */
+  pending?: boolean;
+  partBFailed?: boolean;
 };
 
 const EMPLOYER_TIP = "Tip: check your employer's group policy — they often cover maternity from day one.";
 
-export function Dashboard({ extraction, redactedText, redactions, firstName, demo, cachedAnswers, celebrate }: Props) {
+export function Dashboard({ extraction, redactedText, redactions, firstName, demo, cachedAnswers, celebrate, pending, partBFailed }: Props) {
   const e = useMemo(() => withSourcesOnly(extraction), [extraction]);
   const [tab, setTab] = useState("perks");
   const { claimed, toggle } = useClaimed(claimedKey(e));
@@ -84,7 +89,9 @@ export function Dashboard({ extraction, redactedText, redactions, firstName, dem
             {
               id: "watch",
               label: "Watch out",
-              badge: serious ? (
+              badge: pending ? (
+                <Loader2 className="size-3.5 animate-spin text-muted-foreground" aria-label="loading" />
+              ) : serious ? (
                 <span className="rounded-full bg-bad px-1.5 text-xs font-bold text-white">{serious} serious</span>
               ) : flags.length ? (
                 count(flags.length)
@@ -108,7 +115,9 @@ export function Dashboard({ extraction, redactedText, redactions, firstName, dem
               <MoneyBack moneyBack={e.moneyBack} rewards={e.rewards} />
             </>
           )}
-          {tab === "family" && (
+          {tab !== "perks" && pending && <TabLoading label="Still reading the fine print for this tab…" />}
+          {tab !== "perks" && !pending && partBFailed && <TabUnavailable />}
+          {tab === "family" && !pending && !partBFailed && (
             <TopicTab
               section={e.family}
               emptyText="Your policy doesn't mention maternity, newborn or fertility cover — ask your insurer."
@@ -122,14 +131,14 @@ export function Dashboard({ extraction, redactedText, redactions, firstName, dem
               }
             />
           )}
-          {tab === "lifestyle" && (
+          {tab === "lifestyle" && !pending && !partBFailed && (
             <TopicTab
               section={e.lifestyle}
               emptyText="Your policy doesn't mention lifestyle or chronic-care cover — ask your insurer."
               intro={<p className="text-sm text-muted-foreground">Staying on top of everyday health? Here&apos;s what helps. 💪</p>}
             />
           )}
-          {tab === "watch" && <WatchOut flags={flags} />}
+          {tab === "watch" && !pending && !partBFailed && <WatchOut flags={flags} />}
         </div>
       </main>
       <aside className="min-w-0">

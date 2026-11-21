@@ -2,10 +2,11 @@
 // Lenient on purpose: fill what's missing, fix what's obviously fixable, drop only broken list items,
 // and fail (so the route can retry once) only when the answer isn't usable JSON at all.
 // Relative .ts import so the Node test runner can load this file too.
+import type { z } from "zod";
 import { ExtractionModelSchema, type ExtractionModelOutput } from "./modelSchema.ts";
 
-export type ParseResult =
-  | { ok: true; data: ExtractionModelOutput; dropped: string[]; repaired: boolean }
+export type ParseResult<T = ExtractionModelOutput> =
+  | { ok: true; data: T; dropped: string[]; repaired: boolean }
   | { ok: false; issues: string[] };
 
 type Obj = Record<string, unknown>;
@@ -130,14 +131,17 @@ function dropBrokenItems(data: Obj, paths: PropertyKey[][]): string[] {
   return dropped;
 }
 
-/** Text → validated model output, or readable issues for a retry. */
-export function parseExtraction(text: string): ParseResult {
+/** Text → validated full extraction, or readable issues for a retry. */
+export const parseExtraction = (text: string) => parseWith(text, ExtractionModelSchema);
+
+/** Text → output validated against `schema` (the full schema or one part of it). */
+export function parseWith<T>(text: string, schema: z.ZodType<T>): ParseResult<T> {
   const parsed = parseJsonLoose(text);
   if (!parsed.ok) return { ok: false, issues: [parsed.error] };
   if (!isObj(parsed.value)) return { ok: false, issues: ["(root): expected a JSON object"] };
 
   const data = fillDefaults(parsed.value);
-  let result = ExtractionModelSchema.safeParse(data);
+  let result = schema.safeParse(data);
   const dropped: string[] = [];
   for (let pass = 0; !result.success && pass < 3; pass++) {
     // A broken rewards block shouldn't sink the whole policy.
@@ -148,7 +152,7 @@ export function parseExtraction(text: string): ParseResult {
     const removed = dropBrokenItems(data, result.error.issues.map((i) => i.path));
     if (!removed.length && !dropped.includes("rewards")) break;
     dropped.push(...removed);
-    result = ExtractionModelSchema.safeParse(data);
+    result = schema.safeParse(data);
   }
   if (!result.success) return { ok: false, issues: result.error.issues.slice(0, 12).map((i) => describe(i.path, i.message)) };
   return { ok: true, data: result.data, dropped, repaired: parsed.repaired };

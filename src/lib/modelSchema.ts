@@ -128,3 +128,40 @@ export function normalizeExtraction(m: ExtractionModelOutput): Extraction {
     checkupFrequency: m.checkupFrequency.label.trim() && m.checkupFrequency.sourcePage > 0 ? m.checkupFrequency : null,
   });
 }
+
+/**
+ * Extraction runs as two parallel calls so the dashboard can open as soon as part A is back.
+ * A: what the Perks tab needs. B: the other tabs and the document checks.
+ */
+export const PartASchema = ExtractionModelSchema.pick({
+  isScheduleIncluded: true,
+  policy: true,
+  perks: true,
+  heroValue: true,
+  rewards: true,
+  moneyBack: true,
+  optionalCovers: true,
+  contacts: true,
+});
+export const PartBSchema = ExtractionModelSchema.pick({
+  documentType: true,
+  redFlags: true,
+  family: true,
+  lifestyle: true,
+  ambiguities: true,
+  checkupFrequency: true,
+});
+export type PartA = z.infer<typeof PartASchema>;
+export type PartB = z.infer<typeof PartBSchema>;
+
+/** Stand-in for part B while it's still loading (or if it failed). */
+export const PART_B_PLACEHOLDER: PartB = {
+  documentType: "retail_health",
+  redFlags: [],
+  family: { items: [], notMentioned: [] },
+  lifestyle: { items: [], notMentioned: [] },
+  ambiguities: [],
+  checkupFrequency: { label: "", everyYear: false, sourcePage: 0 },
+};
+
+export const mergeParts = (a: PartA, b: PartB | null): Extraction => normalizeExtraction({ ...a, ...(b ?? PART_B_PLACEHOLDER) });

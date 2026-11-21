@@ -5,7 +5,7 @@ import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { Nav } from "@/components/Nav";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { UploadPanel } from "@/components/upload/UploadPanel";
-import type { AnalysisResult } from "@/lib/analysis";
+import type { AnalysisResult, AnalyzeEvent } from "@/lib/analysis";
 import { ExtractionSchema } from "@/lib/schema";
 import { cachedAnswers } from "@/lib/demo";
 
@@ -16,7 +16,9 @@ function loadSaved(): AnalysisResult | null {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const r = JSON.parse(raw) as AnalysisResult;
-    return { ...r, extraction: ExtractionSchema.parse(r.extraction) };
+    // Saved while part B was still loading (page closed or reloaded): that part never arrived.
+    const unfinished = r.pending ? { pending: false, partBFailed: true } : {};
+    return { ...r, ...unfinished, extraction: ExtractionSchema.parse(r.extraction) };
   } catch {
     return null;
   }
@@ -36,6 +38,7 @@ export function App() {
   }, []);
 
   function show(r: AnalysisResult) {
+    setUploadError(null);
     setResult(r);
     setFresh(true);
     window.scrollTo(0, 0);
@@ -46,7 +49,33 @@ export function App() {
     }
   }
 
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  /** Part B landed after the dashboard opened: merge it (or go back if it isn't a health policy). */
+  function applyUpdate(u: Extract<AnalyzeEvent, { type: "update" }>) {
+    if (u.notHealth) {
+      setResult(null);
+      setFresh(false);
+      setUploadError(u.notHealth);
+      try {
+        localStorage.removeItem(KEY);
+      } catch {}
+      return;
+    }
+    setResult((r) => {
+      if (!r) return r;
+      const next: AnalysisResult = u.extraction
+        ? { ...r, extraction: u.extraction, pending: false }
+        : { ...r, pending: false, partBFailed: true };
+      try {
+        localStorage.setItem(KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }
+
   function startOver() {
+    setUploadError(null);
     setResult(null);
     setFresh(false);
     window.scrollTo(0, 0);
@@ -75,12 +104,14 @@ export function App() {
                 redactedText={result.redactedText}
                 redactions={result.redactions}
                 firstName={result.firstName}
+                pending={!!result.pending}
+                partBFailed={!!result.partBFailed}
                 demo={demo}
                 cachedAnswers={cachedAnswers}
                 celebrate={fresh}
               />
             ) : (
-              <UploadPanel demo={demo} onDone={show} />
+              <UploadPanel demo={demo} onDone={show} onUpdate={applyUpdate} initialError={uploadError} />
             )}
           </motion.div>
         )}
