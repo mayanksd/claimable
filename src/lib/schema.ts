@@ -57,7 +57,7 @@ const TopicSectionSchema = z.object({
 
 export const ExtractionSchema = z.object({
   documentType: z
-    .enum(["retail_health", "group_health", "pet", "surrogacy", "other"])
+    .enum(["retail_health", "group_health", "pet", "motor", "life", "surrogacy", "other", "not_insurance"])
     .default("retail_health")
     .describe("retail_health = individual/family health policy; group_health = employer group policy"),
   isScheduleIncluded: z

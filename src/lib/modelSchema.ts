@@ -49,8 +49,8 @@ const ModelOptionalCoverSchema = z.object({
 
 export const ExtractionModelSchema = z.object({
   documentType: z
-    .enum(["retail_health", "group_health", "pet", "surrogacy", "other"])
-    .describe("retail_health = individual/family health policy; group_health = employer group policy"),
+    .enum(["retail_health", "group_health", "pet", "motor", "life", "surrogacy", "other", "not_insurance"])
+    .describe("retail_health = individual/family health policy; group_health = employer group policy; motor, life (incl. term), pet, surrogacy; other = other niche insurance; not_insurance = not an insurance document"),
   isScheduleIncluded: z
     .boolean()
     .describe("True if the policy schedule (holder, sum insured, premium, period) is in the document; false for wording only"),

@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AnalysisResult, AnalyzeEvent } from "@/lib/analysis";
+import { isWrongDocumentMessage, type AnalysisResult, type AnalyzeEvent } from "@/lib/analysis";
 import { compressImage } from "@/lib/client/compress";
 import { runAnalysis } from "@/lib/client/analyze";
 import { MAX_PDF_BYTES, MAX_PDF_LABEL, MAX_SCREENS, MAX_UPLOAD_BYTES, fileSize, mb, pdfTooBigMessage } from "@/lib/limits";
@@ -135,6 +135,7 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
             if (!result) return false;
             if (u.notHealth) {
               result = null;
+              setPolicy(null);
               setError(u.notHealth);
               setProgress(IDLE);
               setBusy(null);
@@ -153,6 +154,8 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
           if (!heldUpdate.current?.(e)) onUpdate(e);
           break;
         case "error":
+          // The wrong document: drop it so the main button offers a fresh upload.
+          if (isWrongDocumentMessage(e.message)) setPolicy(null);
           setError(e.detail ? `${e.message}\n\nDetails: ${e.detail}` : e.message);
           setProgress(IDLE);
           setBusy(null);
@@ -167,6 +170,11 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
   const { read, masked, perks } = progress;
 
   const pickPolicy = () => policyInput.current?.click();
+  const tryAnother = () => {
+    setError(null);
+    setPolicy(null);
+    pickPolicy();
+  };
   const screensOpen = showScreens || screens.length > 0;
 
   return (
@@ -237,10 +245,20 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
               />
               {policy && <FileRow emoji="📄" name={policy.name} meta={`PDF · ${fileSize(policy.size)}`} onRemove={() => setPolicy(null)} />}
 
-              {error && (
-                <div role="alert" className="rounded-2xl border border-bad/30 bg-bad-soft px-4 py-3 text-left text-sm font-medium text-bad">
-                  <ErrorText text={error} />
+              {error && isWrongDocumentMessage(error) ? (
+                // Not a health policy / scanned: a friendly nudge, not a red error.
+                <div role="alert" className="flex flex-col items-center gap-3 rounded-2xl border border-warm-line bg-warm-soft px-4 py-4">
+                  <p className="text-base font-semibold text-foreground">{error}</p>
+                  <Button variant="outline" onClick={tryAnother}>
+                    Try another PDF
+                  </Button>
                 </div>
+              ) : (
+                error && (
+                  <div role="alert" className="rounded-2xl border border-bad/30 bg-bad-soft px-4 py-3 text-left text-sm font-medium text-bad">
+                    <ErrorText text={error} />
+                  </div>
+                )
               )}
               {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
 

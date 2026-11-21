@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useIsPresent } from "framer-motion";
 import { inr } from "@/lib/format";
 import { useCountUp } from "@/lib/client/useCountUp";
 import { burstConfetti } from "@/lib/client/confetti";
@@ -8,8 +9,13 @@ import { burstConfetti } from "@/lib/client/confetti";
 /** The "you just won" beat between loading and the dashboard (~1.5 s). Not shown with reduced motion. */
 export function RevealCard({ total, onDone, ms = 1500 }: { total: number; onDone: () => void; ms?: number }) {
   const shown = useCountUp(total, 1100);
+  // While fading out (e.g. the upload turned out not to be a health policy), never start the confetti.
+  const present = useRef(true);
+  present.current = useIsPresent();
   useEffect(() => {
-    const c = setTimeout(() => void burstConfetti({ x: 0.5, y: 0.45 }), 250);
+    const c = setTimeout(() => {
+      if (present.current) void burstConfetti({ x: 0.5, y: 0.45 });
+    }, 250);
     const t = setTimeout(onDone, ms);
     return () => {
       clearTimeout(c);

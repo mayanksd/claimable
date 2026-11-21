@@ -77,20 +77,28 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
             {
               id: "perks",
               label: "Perks 🎁",
+              shortLabel: "Perks 🎁",
               star: true,
-              badge: <span className="rounded-full bg-white/25 px-2 py-0.5 text-xs font-bold">{e.perks.length} perks</span>,
+              badge: (
+                <span className="rounded-full bg-white/25 px-2 py-0.5 text-xs font-bold">
+                  {e.perks.length}
+                  <span className="hidden sm:inline"> perks</span>
+                </span>
+              ),
             },
-            { id: "family", label: "Planning a family? 👶" },
-            { id: "lifestyle", label: "Health glow-up ✨" },
+            { id: "family", label: "Planning a family? 👶", shortLabel: "Family 👶" },
+            { id: "lifestyle", label: "Health glow-up ✨", shortLabel: "Glow-up ✨" },
             {
               id: "watch",
               label: "Watch out ⚠️",
+              shortLabel: "Watch out ⚠️",
               badge: pending ? (
                 <Loader2 className="size-4 animate-spin" aria-label="loading" />
               ) : flags.length ? (
                 // Amber on the tab; red is kept for the serious items inside it.
                 <span className="rounded-full border border-warn-line bg-warn-soft px-1.5 text-xs font-bold text-warn">
-                  {flags.length} to know
+                  {flags.length}
+                  <span className="hidden sm:inline"> to know</span>
                 </span>
               ) : undefined,
             },

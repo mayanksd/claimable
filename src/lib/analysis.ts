@@ -1,4 +1,6 @@
 import type { Extraction } from "./schema";
+// Relative .ts import so the Node test runner can load this file too.
+import { SCANNED_PDF_MESSAGE } from "./limits.ts";
 
 export type Redactions = { count: number; kinds: string[] };
 
@@ -25,14 +27,21 @@ export type AnalyzeEvent =
   /** `detail` (raw upstream error) is only sent on preview / dev builds. */
   | { type: "error"; message: string; detail?: string };
 
+/** Friendly one-liners when the upload isn't a health policy. */
 const NOT_HEALTH: Record<string, string> = {
-  pet: "pet insurance",
-  surrogacy: "a surrogacy cover",
-  other: "a different kind of document",
+  pet: "Cute policy, wrong species 🐶 — try a human health policy?",
+  motor: "Vroom vroom — that's car insurance. I fix humans, not bumpers 🚗",
+  life: "That's life insurance — I'm all about the living-well perks of health cover 🕊️",
+  surrogacy: "Interesting policy! But I'm built for everyday health insurance 🍼",
+  other: "Interesting policy! But I'm built for everyday health insurance 🍼",
+  not_insurance: "Nice PDF! Not a health policy though 😄 Try again?",
 };
 
 /** Message for documents that aren't a health policy; null for health policies. */
 export function notHealthMessage(documentType: string): string | null {
-  const what = NOT_HEALTH[documentType];
-  return what ? `This looks like ${what}, not a health policy. Please upload your health policy.` : null;
+  return NOT_HEALTH[documentType] ?? null;
 }
+
+/** Wrong-document messages get a friendly card with "Try another PDF" instead of a red error. */
+const WRONG_DOCUMENT = new Set([...Object.values(NOT_HEALTH), SCANNED_PDF_MESSAGE]);
+export const isWrongDocumentMessage = (message: string | null | undefined) => !!message && WRONG_DOCUMENT.has(message);

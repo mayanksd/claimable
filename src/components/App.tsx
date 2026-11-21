@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, MotionConfig, motion, useReducedMotion } from "framer-motion";
 import { RevealCard } from "@/components/RevealCard";
+import { stopConfetti } from "@/lib/client/confetti";
 import { computeHeroValue } from "@/lib/perks";
 import { withSourcesOnly } from "@/lib/extraction";
 import { Nav } from "@/components/Nav";
@@ -54,10 +55,15 @@ export function App() {
   }
 
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // Bumped whenever we return to the upload screen, so a fresh UploadPanel mounts
+  // (framer-motion would otherwise revive the still-exiting one with its old "analyzing" state).
+  const [attempt, setAttempt] = useState(0);
 
   /** Part B landed after the dashboard opened: merge it (or go back if it isn't a health policy). */
   function applyUpdate(u: Extract<AnalyzeEvent, { type: "update" }>) {
     if (u.notHealth) {
+      void stopConfetti();
+      setAttempt((n) => n + 1);
       setResult(null);
       setFresh(false);
       setUploadError(u.notHealth);
@@ -79,6 +85,7 @@ export function App() {
   }
 
   function startOver() {
+    setAttempt((n) => n + 1);
     setUploadError(null);
     setResult(null);
     setFresh(false);
@@ -92,7 +99,9 @@ export function App() {
   // A freshly produced result gets the ~1.5 s reveal card first (not with reduced motion, not for saved results).
   const [revealDone, setRevealDone] = useState(false);
   const finishReveal = useCallback(() => setRevealDone(true), []);
-  const revealing = !!result && fresh && !revealDone && !reduceMotion;
+  // Nothing to celebrate (₹0, e.g. not really a health policy) → no reveal, no confetti.
+  const revealTotal = result ? computeHeroValue(withSourcesOnly(result.extraction)).annualPerksValueInr : 0;
+  const revealing = !!result && fresh && !revealDone && !reduceMotion && revealTotal > 0;
   const view = !ready ? "loading" : result ? (revealing ? "reveal" : "dashboard") : "upload";
 
   return (
@@ -101,7 +110,7 @@ export function App() {
       <AnimatePresence mode="wait" initial={false}>
         {view !== "loading" && (
           <motion.div
-            key={view}
+            key={view === "upload" ? `upload-${attempt}` : view}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
@@ -109,7 +118,7 @@ export function App() {
           >
             {result && view === "reveal" ? (
               <RevealCard
-                total={computeHeroValue(withSourcesOnly(result.extraction)).annualPerksValueInr}
+                total={revealTotal}
                 onDone={finishReveal}
               />
             ) : result ? (

@@ -4,10 +4,17 @@ import { useId, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-export type TabDef = { id: string; label: string; badge?: React.ReactNode; star?: boolean };
+export type TabDef = {
+  id: string;
+  label: string;
+  /** Under 640px the tabs sit in a 2×2 grid with these short labels. */
+  shortLabel?: string;
+  badge?: React.ReactNode;
+  star?: boolean;
+};
 
 /**
- * Chunky pill tabs (wrap onto two rows on phones so Perks never scrolls out of view). The `star` tab (Perks) always wears the hero gradient with a soft glow and a
+ * Chunky pill tabs: one row of full labels on desktop, a 2×2 grid of short labels on phones. The `star` tab (Perks) always wears the hero gradient with a soft glow and a
  * one-time shine sweep; other tabs are white, and solid indigo when selected. Arrow keys move.
  */
 export function Tabs({ tabs, active, onChange }: { tabs: TabDef[]; active: string; onChange: (id: string) => void }) {
@@ -20,7 +27,7 @@ export function Tabs({ tabs, active, onChange }: { tabs: TabDef[]; active: strin
     refs.current[n]?.focus();
   };
   return (
-    <div role="tablist" className="mt-7 mb-5 flex flex-wrap gap-2 py-1.5">
+    <div role="tablist" className="mt-7 mb-5 grid grid-cols-2 gap-2 py-1.5 sm:flex sm:flex-wrap">
       {tabs.map((t, i) => {
         const selected = active === t.id;
         return (
@@ -41,7 +48,7 @@ export function Tabs({ tabs, active, onChange }: { tabs: TabDef[]; active: strin
               if (e.key === "ArrowLeft") move(i - 1);
             }}
             className={cn(
-              "relative flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 overflow-hidden rounded-full px-3.5 text-sm font-bold whitespace-nowrap transition-all duration-200 sm:min-h-12 sm:gap-2 sm:px-5 sm:text-base",
+              "relative flex min-h-12 min-w-0 shrink-0 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-full px-3 text-[15px] font-bold whitespace-nowrap transition-all duration-200 sm:justify-start sm:gap-2 sm:px-5 sm:text-base",
               t.star
                 ? "bg-gradient-to-r from-brand via-brand-2 to-warm text-white shadow-lg shadow-warm/30"
                 : selected
@@ -51,7 +58,14 @@ export function Tabs({ tabs, active, onChange }: { tabs: TabDef[]; active: strin
               t.star && !selected && "opacity-90 hover:opacity-100",
             )}
           >
-            {t.label}
+            {t.shortLabel ? (
+              <>
+                <span className="sm:hidden">{t.shortLabel}</span>
+                <span className="hidden sm:inline">{t.label}</span>
+              </>
+            ) : (
+              t.label
+            )}
             {t.badge}
             {t.star && !reduce && (
               // One shine sweep on first view.

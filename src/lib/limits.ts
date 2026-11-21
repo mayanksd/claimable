@@ -14,7 +14,7 @@ export const pdfTooBigMessage = (bytes: number) =>
   `This PDF is ${mb(bytes)}. Please upload a file under ${MAX_PDF_LABEL} — tip: upload just the policy schedule / benefits pages, or compress it at ilovepdf.com.`;
 
 export const SCANNED_PDF_MESSAGE =
-  "This looks like a scanned PDF. Please upload the digital copy from your insurer's email or app.";
+  "This PDF is all pictures, no words 📸 — try the digital copy from your insurer's email.";
 
 /** Human size for file chips: "84 KB", "1.2 MB". */
 export const fileSize = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : mb(bytes));

@@ -13,7 +13,7 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 ## Stack (do not change without asking)
 - Next.js 15 App Router, TypeScript, `src/` dir
 - Tailwind CSS + shadcn/ui (card, button, badge, input, scroll-area, progress, skeleton) + framer-motion + lucide-react
-- Vercel AI SDK: `ai`, `@ai-sdk/anthropic`, `@ai-sdk/react` (`useChat`), `generateObject` with Zod for extraction
+- Vercel AI SDK: `ai`, `@ai-sdk/anthropic`, `@ai-sdk/react` (`useChat`); extraction uses `generateText` + our own JSON parser (`parseWith`) validated with Zod (no structured outputs — the grammar is too large)
 - Model: `claude-sonnet-5-5` (change in one constant `MODEL` in `src/lib/ai.ts`)
 - PDF text: `unpdf` (server only)
 - No database, no auth. Last result kept in React state + localStorage.
@@ -46,9 +46,9 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - `PerkGrid` / `PerkCard` — "Use these this week": top 3 `use_now` perks: biggest ₹ first (Easy before Needs a claim on a tie), last slot for the best unlimited/free perk; equal-height cards with a footer row: primary "How do I claim this? →" (asks the chat; the check-up card's primary is "Max my ₹X →"), tag "Easy" / "Needs a claim", small "Mark as used"; page shown as grey "Pg N". "Show all perks (N)" expands the rest grouped by `category`; the "₹X of ₹Y used" meter sits below the cards.
 - `CheckupPlanner` — "Max my ₹X →" on the health check-up card: full-body base + add-ons up to the policy limit, running total bar; prices in `src/data/test-prices.ts`; only tests from the policy's list if it has one. No medical advice.
 - `MoneyBack` — `moneyBack` items (e.g. "Walk 8,000 steps a day → 10% off renewal") + coin ring / redeem now / next item when a rewards screenshot was given. Hidden if neither.
-- Tabs under the hero (chunky pills): "Perks 🎁" (star: hero gradient, "N perks" badge, glow, one shine sweep) | "Planning a family? 👶" (`family`) | "Health glow-up ✨" (`lifestyle`, "Covered from <date>" for waits) | "Watch out ⚠️" (amber "N to know" badge; red only inside). Inactive: white; selected non-Perks: solid indigo. Each tab has its own empty state.
+- Tabs under the hero (chunky pills): "Perks 🎁" (star: hero gradient, "N perks" badge, glow, one shine sweep) | "Planning a family? 👶" (`family`) | "Health glow-up ✨" (`lifestyle`, "Covered from <date>" for waits) | "Watch out ⚠️" (amber "N to know" badge; red only inside). Inactive: white; selected non-Perks: solid indigo. Under 640px: 2×2 grid with short labels (Perks 🎁 · Family 👶 · Glow-up ✨ · Watch out ⚠️). Each tab has its own empty state.
 - `WatchOut` — severity colour (high = red, medium = amber), title, why, page; adds a flag when `checkupFrequency.everyYear` is false.
-- Extraction extras: `documentType` (non-health → stop with a message; `group_health` → "Employer policy" badge), `isScheduleIncluded` (false → soft banner), `optionalCovers` ("Optional — check your schedule"), `policy.startDate` (check-up reset nudge).
+- Extraction extras: `documentType` (retail_health, group_health, motor, life, pet, surrogacy, other, not_insurance; non-health → stop with a fun one-liner + "Try another PDF", scanned PDFs too; `group_health` → "Employer policy" badge), `isScheduleIncluded` (false → soft banner), `optionalCovers` ("Optional — check your schedule"), `policy.startDate` (check-up reset nudge).
 - "Mark as used" toggle per perk + "₹X of ₹Y used" meter (localStorage, per policy).
 - Logo: `src/components/Logo.tsx` (shield + tick + sparkle, hero gradient), also `src/app/icon.svg` (favicon).
 - `ChatPanel` — "Talk to your policy", sticky right column; 3 starter chips, then the latest answer's follow-ups + "Ask something else"; messages render a verdict pill only if line 1 is exactly COVERED / PARTLY COVERED / NOT COVERED / NOT IN YOUR DOCUMENTS, then the markdown body, then the source line; the `FOLLOWUPS:` line becomes chips.
