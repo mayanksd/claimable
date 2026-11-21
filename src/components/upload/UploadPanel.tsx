@@ -246,6 +246,10 @@ export function UploadPanel({ demo, onDone }: { demo: boolean; onDone: (r: Analy
           The sample is a fictional Aarogya policy. {demo && "Demo mode: no files are sent anywhere."}
         </p>
       )}
+      <p className="mx-auto mt-4 max-w-[520px] text-[12px] text-muted-foreground/80 italic">
+        🔒 We mask your name, PAN, phone, email, address and policy number before AI reads anything. Files are never stored.
+        Crop names out of screenshots.
+      </p>
 
       {analyzing && (
         <div className="mx-auto mt-7 grid max-w-[440px] gap-2.5 text-left" aria-live="polite">
@@ -276,7 +280,7 @@ function SlotRow({ icon, label, hint }: { icon: React.ReactNode; label: string; 
     <div className="flex items-center gap-3 rounded-xl border border-dashed border-brand-line bg-white/60 px-3.5 py-3 text-left text-muted-foreground">
       {icon}
       <span className="min-w-0 flex-1 truncate font-semibold">{label}</span>
-      <small className="shrink-0 text-xs">{hint}</small>
+      <small className="hidden shrink-0 text-xs sm:inline">{hint}</small>
     </div>
   );
 }
