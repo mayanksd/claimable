@@ -38,7 +38,7 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - Demo mode: `?demo=1` or env `DEMO_MODE=1` → `/api/analyze` returns `demo/extraction.json` after a 2.5 s fake delay; chat returns cached answers when the question matches a chip.
 
 ## UI components
-- `UploadPanel` — dropzone (PDF + images), file chips, "Find my perks" button; progress card with a rotating headline (`src/lib/loadingCopy.ts`, 5 s each, then a loop), the real step ticks, and a rotating "Did you know?" fact (6 s). No time estimates or apologies in loading copy.
+- `UploadPanel` — dropzone (PDF + images), file chips, "Find my perks" button; progress card with a rotating headline (`src/lib/loadingCopy.ts`, 5 s each, then a loop), a slim indeterminate gradient bar (no percentages), the real step ticks ("Masked N personal details for privacy"), and a rotating "Did you know?" fact (6 s). No time estimates or apologies in loading copy.
 - Landing: eyebrow "🩺 Health insurance perk finder", "Your health insurance has perks. / Start using them.", one centred ~640px column; one always-active gradient button ("Upload policy PDF →" opens the picker, then "Find my hidden perks ✨"), drop hint, "+ Add insurance app screenshots (optional)", sample link, privacy line.
 - Greeting — "Nice, <first name>! 🎉" (fallback "You're in! 🎉"); the name comes only from the policyholder/proposer/insured field via `redact()` (label words rejected) and goes to the browser only, never to the model.
 - Reveal: a fresh result shows ~1.5 s "We found something good! 🎉" with ₹ count-up + light confetti, then fades (300 ms) into the dashboard. Skipped with reduced motion / saved results.

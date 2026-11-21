@@ -21,8 +21,6 @@ type Progress = {
 
 const IDLE: Progress = { read: { state: "todo" }, masked: { state: "todo" }, perks: { state: "todo" } };
 const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
-// "Policy number" → "policy number", but keep acronyms like PAN.
-const kindLabel = (k: string) => (k === k.toUpperCase() ? k : k.toLowerCase());
 const isPdf = (f: File) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
 
 type UpdateEvent = Extract<AnalyzeEvent, { type: "update" }>;
@@ -309,6 +307,10 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
             <div className="rounded-3xl border border-border/70 bg-white/80 p-6 text-left shadow-soft backdrop-blur sm:p-8">
             <div className="mb-5">
               <LoadingHeadline />
+              {/* Indeterminate: it shows activity, never a fake percentage. */}
+              <div className="loading-track mt-4" role="progressbar" aria-label="Reading your policy" aria-busy="true">
+                <span />
+              </div>
             </div>
             <div className="grid gap-3" aria-live="polite">
               <AnimatePresence initial={false}>
@@ -322,7 +324,7 @@ export function UploadPanel({ demo, onDone, onUpdate, initialError = null }: Pro
                 {masked.state !== "todo" && (
                   <Step key="masked" state={masked.state}>
                     {masked.state === "done"
-                      ? `Masked ${plural(masked.count ?? 0, "personal detail")}${masked.kinds?.length ? ` (${masked.kinds.slice(0, 5).map(kindLabel).join(", ")}…)` : ""}`
+                      ? `Masked ${plural(masked.count ?? 0, "personal detail")} for privacy`
                       : "Masking personal details…"}
                   </Step>
                 )}
