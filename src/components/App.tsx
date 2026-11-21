@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { Nav } from "@/components/Nav";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { UploadPanel } from "@/components/upload/UploadPanel";
@@ -25,6 +26,8 @@ export function App() {
   const [ready, setReady] = useState(false);
   const [demo, setDemo] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  // Confetti only for a result that was just produced, not one restored after a reload.
+  const [fresh, setFresh] = useState(false);
 
   useEffect(() => {
     setDemo(new URLSearchParams(window.location.search).get("demo") === "1");
@@ -34,6 +37,7 @@ export function App() {
 
   function show(r: AnalysisResult) {
     setResult(r);
+    setFresh(true);
     window.scrollTo(0, 0);
     try {
       localStorage.setItem(KEY, JSON.stringify(r));
@@ -44,27 +48,43 @@ export function App() {
 
   function startOver() {
     setResult(null);
+    setFresh(false);
     window.scrollTo(0, 0);
     try {
       localStorage.removeItem(KEY);
     } catch {}
   }
 
+  const view = !ready ? "loading" : result ? "dashboard" : "upload";
+
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <Nav sample={!!result?.sample} onStartOver={result ? startOver : undefined} />
-      {!ready ? null : result ? (
-        <Dashboard
-          extraction={result.extraction}
-          redactedText={result.redactedText}
-          redactions={result.redactions}
-          firstName={result.firstName}
-          demo={demo}
-          cachedAnswers={cachedAnswers}
-        />
-      ) : (
-        <UploadPanel demo={demo} onDone={show} />
-      )}
-    </>
+      <AnimatePresence mode="wait" initial={false}>
+        {view !== "loading" && (
+          <motion.div
+            key={view}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            {result ? (
+              <Dashboard
+                extraction={result.extraction}
+                redactedText={result.redactedText}
+                redactions={result.redactions}
+                firstName={result.firstName}
+                demo={demo}
+                cachedAnswers={cachedAnswers}
+                celebrate={fresh}
+              />
+            ) : (
+              <UploadPanel demo={demo} onDone={show} />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </MotionConfig>
   );
 }

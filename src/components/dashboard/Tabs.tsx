@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef } from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export type TabDef = { id: string; label: string; badge?: React.ReactNode };
@@ -15,7 +16,7 @@ export function Tabs({ tabs, active, onChange }: { tabs: TabDef[]; active: strin
     refs.current[(i + tabs.length) % tabs.length]?.focus();
   };
   return (
-    <div role="tablist" className="-mx-4 mt-6 mb-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+    <div role="tablist" className="-mx-4 mt-7 mb-5 flex gap-1 overflow-x-auto border-b border-border px-4 sm:mx-0 sm:px-0">
       {tabs.map((t, i) => (
         <button
           key={t.id}
@@ -34,12 +35,19 @@ export function Tabs({ tabs, active, onChange }: { tabs: TabDef[]; active: strin
             if (e.key === "ArrowLeft") move(i - 1);
           }}
           className={cn(
-            "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold whitespace-nowrap transition-colors",
-            active === t.id ? "border-foreground bg-foreground text-white" : "bg-white text-muted-foreground hover:bg-secondary",
+            "relative flex shrink-0 cursor-pointer items-center gap-1.5 px-3.5 pt-2 pb-3 text-[15px] font-semibold whitespace-nowrap transition-colors",
+            active === t.id ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           )}
         >
           {t.label}
           {t.badge}
+          {active === t.id && (
+            <motion.span
+              layoutId={`${base}-underline`}
+              className="absolute inset-x-2 -bottom-px h-[3px] rounded-full bg-gradient-to-r from-warm to-warm-2"
+              transition={{ type: "spring", stiffness: 500, damping: 38 }}
+            />
+          )}
         </button>
       ))}
     </div>

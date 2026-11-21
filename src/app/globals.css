@@ -36,6 +36,13 @@
   --warn-line: #fde68a;
   --bad: #dc2626;
   --bad-soft: #fef2f2;
+
+  /* Warm accent for wins and CTAs */
+  --warm: #ff7a59;
+  --warm-2: #ff4f7b;
+  --warm-soft: #fff1eb;
+  --warm-line: #ffd2c2;
+  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 30px -14px rgb(79 70 229 / 0.25);
 }
 
 @theme inline {
@@ -71,8 +78,14 @@
   --color-warn-line: var(--warn-line);
   --color-bad: var(--bad);
   --color-bad-soft: var(--bad-soft);
+  --color-warm: var(--warm);
+  --color-warm-2: var(--warm-2);
+  --color-warm-soft: var(--warm-soft);
+  --color-warm-line: var(--warm-line);
+  --shadow-soft: var(--shadow-soft);
 
-  --font-sans: var(--font-inter), -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bricolage Grotesque", "Plus Jakarta Sans", -apple-system, sans-serif;
   --radius-sm: calc(var(--radius) - 8px);
   --radius-md: calc(var(--radius) - 6px);
   --radius-lg: calc(var(--radius) - 4px);
@@ -85,5 +98,10 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
   }
 }

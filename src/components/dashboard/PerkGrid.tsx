@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import type { Extraction } from "@/lib/schema";
 import { isCheckupPerk, topPerks, type Perk } from "@/lib/perks";
@@ -30,16 +31,23 @@ export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupR
   const [planFor, setPlanFor] = useState<string | null>(null);
 
   // The check-up card gets a "Max my ₹X →" button; the planner opens full-width right after its grid.
-  const card = (p: Perk) => (
-    <PerkCard
+  const card = (p: Perk, i: number) => (
+    <motion.div
       key={p.id}
-      perk={p}
-      maxOpen={planFor === p.id}
-      claimed={claimed.has(p.id)}
-      onToggleClaimed={() => onToggleClaimed(p.id)}
-      resetNote={checkupResetNote}
-      onMaxCheckup={isCheckupPerk(p) ? () => setPlanFor((id) => (id === p.id ? null : p.id)) : undefined}
-    />
+      className="flex"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: i * 0.05, ease: "easeOut" }}
+    >
+      <PerkCard
+        perk={p}
+        maxOpen={planFor === p.id}
+        claimed={claimed.has(p.id)}
+        onToggleClaimed={() => onToggleClaimed(p.id)}
+        resetNote={checkupResetNote}
+        onMaxCheckup={isCheckupPerk(p) ? () => setPlanFor((id) => (id === p.id ? null : p.id)) : undefined}
+      />
+    </motion.div>
   );
   const planner = (items: Perk[]) => {
     const p = items.find((x) => x.id === planFor);

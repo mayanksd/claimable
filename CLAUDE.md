@@ -48,7 +48,8 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - Extraction extras: `documentType` (non-health → stop with a message; `group_health` → "Employer policy" badge), `isScheduleIncluded` (false → soft banner), `optionalCovers` ("Optional — check your schedule"), `policy.startDate` (check-up reset nudge).
 - "Mark claimed" toggle per perk + "₹X of ₹Y claimed" bar (localStorage, per policy).
 - `ChatPanel` — "Talk to your policy", sticky right column; 3 starter chips, then the latest answer's follow-ups + "Ask something else"; messages render a verdict pill only if line 1 is exactly COVERED / PARTLY COVERED / NOT COVERED / NOT IN YOUR DOCUMENTS, then the markdown body, then the source line; the `FOLLOWUPS:` line becomes chips.
-- Motion: cards stagger in (50 ms), hero counter 1.2 s, skeletons while loading.
+- Motion (framer-motion, `MotionConfig reducedMotion="user"`): fade/slide upload → progress → dashboard; progress steps tick in one by one; hero count-up 1.2 s + one confetti burst (canvas-confetti) only for a freshly produced result; perk cards stagger in (50 ms); buttons lift on hover; tab underline slides.
+- Look: fonts via @fontsource (Bricolage Grotesque headings, Plus Jakarta Sans body; no next/font/google). Indigo base + warm coral accent (`warm` tokens) for wins/CTAs; `hero` button variant is the one primary action per screen (grey when disabled); soft background blobs; rounded-2xl cards with `shadow-soft`. Copy is casual and warm.
 
 ## Rules
 - Never send unredacted text to the model.

@@ -37,11 +37,16 @@ export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxChecku
   const isCheckup = !!onMaxCheckup && !!perk.capInr;
 
   return (
-    <Card className={cn("relative flex flex-col transition-colors", claimed && "border-good-line bg-good-soft/40")}>
+    <Card
+      className={cn(
+        "relative flex w-full flex-col transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg motion-reduce:transform-none",
+        claimed && "border-good-line bg-good-soft/40",
+      )}
+    >
       <Badge variant="outline" className="absolute top-4 right-4">
         p.{perk.sourcePage}
       </Badge>
-      <div className="text-[28px] leading-none" aria-hidden>
+      <div className="grid size-12 place-items-center rounded-full bg-warm-soft text-[26px] leading-none" aria-hidden>
         {perk.emoji}
       </div>
       {optional && (
@@ -82,7 +87,7 @@ export function PerkCard({ perk, optional, claimed, onToggleClaimed, onMaxChecku
           </button>
         )}
         {isCheckup && (
-          <Button size="sm" variant="brand" className="ml-auto" onClick={onMaxCheckup} aria-expanded={maxOpen}>
+          <Button size="sm" variant="hero" className="ml-auto" onClick={onMaxCheckup} aria-expanded={maxOpen}>
             Max my {inr(perk.capInr!)} →
           </Button>
         )}

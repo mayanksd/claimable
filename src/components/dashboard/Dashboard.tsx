@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { burstConfetti } from "@/lib/client/confetti";
 import type { Extraction } from "@/lib/schema";
 import { withSourcesOnly } from "@/lib/extraction";
 import { claimedKey, claimedTotal } from "@/lib/claimed";
@@ -25,14 +26,24 @@ type Props = {
   firstName?: string | null;
   demo: boolean;
   cachedAnswers: Record<string, string>;
+  /** First reveal of a fresh result: confetti once. */
+  celebrate?: boolean;
 };
 
 const EMPLOYER_TIP = "Tip: check your employer's group policy — they often cover maternity from day one.";
 
-export function Dashboard({ extraction, redactedText, redactions, firstName, demo, cachedAnswers }: Props) {
+export function Dashboard({ extraction, redactedText, redactions, firstName, demo, cachedAnswers, celebrate }: Props) {
   const e = useMemo(() => withSourcesOnly(extraction), [extraction]);
   const [tab, setTab] = useState("perks");
   const { claimed, toggle } = useClaimed(claimedKey(e));
+
+  const celebrated = useRef(false);
+  useEffect(() => {
+    if (!celebrate || celebrated.current || e.heroValue.annualPerksValueInr <= 0) return;
+    celebrated.current = true;
+    const t = setTimeout(() => void burstConfetti({ x: 0.32, y: 0.35 }), 450);
+    return () => clearTimeout(t);
+  }, [celebrate, e.heroValue.annualPerksValueInr]);
 
   const flags = watchOutFlags(e);
   const serious = flags.filter((f) => f.severity === "high").length;
@@ -45,9 +56,14 @@ export function Dashboard({ extraction, redactedText, redactions, firstName, dem
   return (
     <div className="mx-auto grid max-w-[1360px] gap-6 px-4 py-6 sm:px-7 lg:grid-cols-[1fr_400px]">
       <main className="min-w-0">
-        <div className="mb-3 flex flex-wrap items-center gap-2.5">
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-[28px]">Hi{firstName ? ` ${firstName}` : ""} 👋</h1>
-          {e.documentType === "group_health" && <Badge variant="default">Employer policy</Badge>}
+        <div className="mb-4">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-[28px] leading-tight font-extrabold tracking-tight sm:text-[34px]">
+              Nice{firstName ? `, ${firstName}` : ""}! 🎉
+            </h1>
+            {e.documentType === "group_health" && <Badge variant="default">Employer policy</Badge>}
+          </div>
+          <p className="text-base font-medium text-muted-foreground sm:text-lg">Here&apos;s what your policy owes you.</p>
         </div>
         <PrivacyBanner count={redactions.count} />
         {!e.isScheduleIncluded && (
