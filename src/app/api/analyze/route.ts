@@ -1,7 +1,9 @@
-import { generateObject } from "ai";
+import { generateText, type ModelMessage } from "ai";
 import { model } from "@/lib/ai";
 import { redact } from "@/lib/redact";
-import { ExtractionModelSchema, normalizeExtraction } from "@/lib/modelSchema";
+import { normalizeExtraction } from "@/lib/modelSchema";
+import { parseExtraction } from "@/lib/parseExtraction";
+import { buildExtractionSystem } from "@/lib/extractionPrompt";
 import { withSourcesOnly } from "@/lib/extraction";
 import { demoEvents } from "@/lib/demoEvents";
 import { MAX_PDF_BYTES, MAX_SCREENS, MAX_UPLOAD_BYTES, SCANNED_PDF_MESSAGE, mb, pdfTooBigMessage } from "@/lib/limits";
@@ -12,6 +14,11 @@ import { describeError, showErrorDetail, statusOf } from "@/lib/server/errors";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+/** Room for the full JSON (≈3–5k tokens) plus any thinking the model does first. */
+const MAX_OUTPUT_TOKENS = 16000;
+/** Only retry if the first attempt left enough of the 60 s budget for a second one. */
+const RETRY_IF_UNDER_MS = 28_000;
 
 const fail = (message: string, status: number) => Response.json({ error: message }, { status });
 
@@ -77,12 +84,42 @@ export async function POST(req: Request) {
       })),
     );
     try {
-      const { object } = await generateObject({
-        model,
-        schema: ExtractionModelSchema,
-        system: loadPrompt("extract"),
-        messages: [{ role: "user", content: [{ type: "text", text: redacted.text }, ...images] }],
-      });
+      // Plain-text JSON, parsed and validated here. Structured outputs can't compile a grammar this size.
+      const started = Date.now();
+      const system = buildExtractionSystem(loadPrompt("extract"));
+      const messages: ModelMessage[] = [{ role: "user", content: [{ type: "text", text: redacted.text }, ...images] }];
+      const ask = async () =>
+        (await generateText({ model, system, messages, maxOutputTokens: MAX_OUTPUT_TOKENS, maxRetries: 1 })).text;
+
+      let answer = await ask();
+      let parsed = parseExtraction(answer);
+      // One retry with the problems spelled out, if there's still time inside maxDuration.
+      if (!parsed.ok && Date.now() - started < RETRY_IF_UNDER_MS) {
+        console.warn(`[analyze] answer unusable, retrying once: ${parsed.issues.join("; ")}`);
+        messages.push(
+          { role: "assistant", content: answer },
+          {
+            role: "user",
+            content: `Fix these issues and return only JSON (a single object, no markdown):\n- ${parsed.issues.join("\n- ")}`,
+          },
+        );
+        answer = await ask();
+        parsed = parseExtraction(answer);
+      }
+      if (!parsed.ok) {
+        const detail = `Unusable AI answer: ${parsed.issues.join("; ")}`;
+        console.error(`[analyze] ${detail}\n--- answer start ---\n${answer.slice(0, 1500)}`);
+        yield {
+          type: "error",
+          message: "We couldn't make sense of the AI's answer for this policy. Please try again in a moment.",
+          ...(showErrorDetail() ? { detail } : {}),
+        };
+        return;
+      }
+      if (parsed.dropped.length || parsed.repaired) {
+        console.warn(`[analyze] parsed with fixes: repaired=${parsed.repaired} dropped=${parsed.dropped.join(", ")}`);
+      }
+      const object = parsed.data;
       const notHealth = notHealthMessage(object.documentType);
       if (notHealth) {
         yield { type: "error", message: notHealth };

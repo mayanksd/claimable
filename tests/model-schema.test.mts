@@ -2,16 +2,17 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import { readFileSync } from "node:fs";
-import { generateObject } from "ai";
+import { generateText } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
-import type { ZodTypeAny } from "zod";
-import { ExtractionModelSchema, normalizeExtraction, type ExtractionModelOutput } from "../src/lib/modelSchema.ts";
+import { normalizeExtraction, type ExtractionModelOutput } from "../src/lib/modelSchema.ts";
 import { ExtractionSchema } from "../src/lib/schema.ts";
+import { parseExtraction } from "../src/lib/parseExtraction.ts";
+import { buildExtractionSystem } from "../src/lib/extractionPrompt.ts";
 
 const demo = ExtractionSchema.parse(JSON.parse(readFileSync(new URL("../demo/extraction.json", import.meta.url), "utf8")));
 
-/** The demo extraction as the model would return it under ExtractionModelSchema (sentinels, no nulls in new fields). */
-const demoAsModelOutput = (): ExtractionModelOutput => ({
+/** The demo extraction as the model returns it (sentinels instead of nulls in the newer fields). */
+export const demoAsModelOutput = (): ExtractionModelOutput => ({
   ...demo,
   policy: { ...demo.policy, startDate: demo.policy.startDate ?? "" },
   optionalCovers: [],
@@ -20,8 +21,8 @@ const demoAsModelOutput = (): ExtractionModelOutput => ({
   checkupFrequency: demo.checkupFrequency ?? { label: "", everyYear: false, sourcePage: 0 },
 });
 
-/** Runs generateObject against a local stand-in for the Messages API; returns the request body it sent. */
-async function capture(schema: ZodTypeAny, replyJson: unknown = {}) {
+/** generateText against a local stand-in for the Messages API that replies with `replyText`. */
+async function callMock(replyText: string) {
   let body: any;
   const server = http.createServer((req, res) => {
     let raw = "";
@@ -29,68 +30,45 @@ async function capture(schema: ZodTypeAny, replyJson: unknown = {}) {
     req.on("end", () => {
       body = JSON.parse(raw);
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(
-        JSON.stringify({
-          id: "msg_test", type: "message", role: "assistant", model: body.model,
-          content: [{ type: "text", text: JSON.stringify(replyJson) }],
-          stop_reason: "end_turn", stop_sequence: null, usage: { input_tokens: 1, output_tokens: 1 },
-        }),
-      );
+      res.end(JSON.stringify({
+        id: "msg_test", type: "message", role: "assistant", model: body.model,
+        content: [{ type: "text", text: replyText }],
+        stop_reason: "end_turn", stop_sequence: null, usage: { input_tokens: 1, output_tokens: 1 },
+      }));
     });
   });
   await new Promise<void>((r) => server.listen(0, r));
   const port = (server.address() as { port: number }).port;
   const anthropic = createAnthropic({ baseURL: `http://127.0.0.1:${port}/v1`, apiKey: "test" });
-  let object: unknown, error: unknown;
   try {
-    ({ object } = await generateObject({ model: anthropic("claude-sonnet-5-5"), schema, prompt: "x", maxRetries: 0 }));
-  } catch (e) {
-    error = e;
+    const { text } = await generateText({
+      model: anthropic("claude-sonnet-5-5"),
+      system: buildExtractionSystem("You read a health insurance policy."),
+      prompt: "[[PAGE 1]] …",
+      maxOutputTokens: 16000,
+      maxRetries: 0,
+    });
+    return { body, text };
   } finally {
     server.close();
   }
-  return { body, object, error };
 }
 
-function complexity(schema: any) {
-  let optional = 0, unions = 0, defaults = 0;
-  const problems: string[] = [];
-  (function walk(o: any, path: string) {
-    if (Array.isArray(o)) return o.forEach((x, i) => walk(x, `${path}[${i}]`));
-    if (!o || typeof o !== "object") return;
-    if (o.type === "object" && o.properties) {
-      optional += Object.keys(o.properties).filter((k) => !(o.required ?? []).includes(k)).length;
-      if (o.additionalProperties !== false) problems.push(`additionalProperties at ${path}`);
-    }
-    if (Array.isArray(o.type) || o.anyOf) unions++;
-    if (o.anyOf && (o.type || o.properties)) problems.push(`anyOf with type at ${path}`);
-    if ("default" in o) defaults++;
-    for (const [k, v] of Object.entries(o)) walk(v, k === "properties" ? path : `${path}.${k}`);
-  })(schema, "$");
-  return { optional, unions, defaults, problems };
-}
-
-test("schema sent to Claude is flat and required (structured-outputs grammar stays small)", async () => {
-  const { body } = await capture(ExtractionModelSchema);
-  const schema = body.output_config?.format?.schema;
-  assert.ok(schema, "generateObject should send output_config.format.schema");
-  const c = complexity(schema);
-  assert.deepEqual(c.problems, []);
-  assert.equal(c.optional, 0, "no optional properties");
-  assert.equal(c.defaults, 0, "no default keywords");
-  assert.ok(c.unions <= 4, `at most the 4 original unions, got ${c.unions}`);
+test("extraction request uses no structured outputs / strict grammar", async () => {
+  const { body } = await callMock("{}");
+  assert.equal(body.output_config?.format, undefined, "no output_config.format");
+  assert.equal(body.tools, undefined, "no tools");
+  assert.equal(body.max_tokens, 16000);
+  const system = typeof body.system === "string" ? body.system : body.system.map((b: { text: string }) => b.text).join("");
+  assert.match(system, /Return ONLY a single JSON object matching this shape/);
 });
 
-test("regression record: the app-level schema is NOT what we send (it has defaults and optionals)", async () => {
-  const { body } = await capture(ExtractionSchema);
-  const c = complexity(body.output_config.format.schema);
-  assert.ok(c.optional >= 8 && c.defaults >= 8 && c.unions >= 9, JSON.stringify(c));
-});
-
-test("full round trip: model JSON → generateObject → normalizeExtraction equals the demo extraction", async () => {
-  const { object, error } = await capture(ExtractionModelSchema, demoAsModelOutput());
-  assert.equal(error, undefined);
-  assert.deepEqual(normalizeExtraction(object as ExtractionModelOutput), demo);
+test("mock round trip: fenced JSON answer → parse → normalize equals demo/extraction.json", async () => {
+  const { text } = await callMock("Here you go:\n```json\n" + JSON.stringify(demoAsModelOutput(), null, 2) + "\n```\nHope this helps!");
+  const parsed = parseExtraction(text);
+  assert.ok(parsed.ok, JSON.stringify(!parsed.ok && parsed.issues));
+  assert.deepEqual(parsed.dropped, []);
+  assert.deepEqual(normalizeExtraction(parsed.data), demo);
 });
 
 test("sentinels map back to nulls", () => {

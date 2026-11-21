@@ -30,8 +30,8 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - `POST /api/analyze` (multipart: `policy` PDF, `screens[]` images)
   1. `unpdf` → text per page, prefix each page with `[[PAGE n]]`
   2. `redact(text)` → `{ text, count, kinds }`
-  3. `generateObject({ model, schema: ExtractionModelSchema, system: extractPrompt, messages: [...] })` then `normalizeExtraction()` → `ExtractionSchema` shape.
-     **Schema rule:** generateObject uses Anthropic structured outputs, which compile the schema into a grammar with complexity limits (optional params, unions, nesting). Keep `ExtractionModelSchema` (`src/lib/modelSchema.ts`) flat: every property required, no `.default()`, no new `.nullable()`/unions — use sentinels ("" / 0 / []) and map them in `normalizeExtraction()`. `npm test` checks the schema actually sent.
+  3. `generateText({ model, system: buildExtractionSystem(extractPrompt), messages, maxOutputTokens: 16000 })` → `parseExtraction(text)` (strip fences, outermost `{…}`, trailing-comma repair, defaults for missing fields, drop only broken list items, validate with `ExtractionModelSchema`) → `normalizeExtraction()` → `ExtractionSchema` shape. One retry with the validation issues if the answer is unusable and time remains.
+     **No structured outputs / strict tools for extraction:** the grammar for this schema is too large for the API to compile ("The compiled grammar is too large"). The JSON shape lives in the system prompt (`src/lib/extractionPrompt.ts`, a typed example + enum values generated from the schema).
   4. Return `{ extraction, redactedText, redactions: { count, kinds } }`
 - `POST /api/chat` → `streamText` with `system = chatPrompt + "\n\nEXTRACTION JSON:\n" + json + "\n\nPOLICY TEXT:\n" + redactedText`; return `toUIMessageStreamResponse()` (AI SDK v5).
 - Demo mode: `?demo=1` or env `DEMO_MODE=1` → `/api/analyze` returns `demo/extraction.json` after a 2.5 s fake delay; chat returns cached answers when the question matches a chip.
