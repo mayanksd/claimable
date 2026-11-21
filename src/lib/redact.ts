@@ -10,7 +10,7 @@ const RULES: Rule[] = [
   { kind: "Policy number", re: /(Policy No\.?|Policy Number)\s*[:\-]?\s*[A-Z0-9][A-Z0-9\-\/]{5,29}/gi, labelled: true, mask: "[POLICY_NO]" },
   { kind: "PAN", re: /\b[A-Z]{5}[0-9]{4}[A-Z]\b/g, mask: "[PAN]" },
   { kind: "Email", re: /\b[\w.+-]+@(?!aarogya-example)[\w-]+\.[\w.-]+\b/g, mask: "[EMAIL]" },
-  { kind: "Phone", re: /(?<![\d ])(?:\+91[\s-]?)?[6-9]\d{9}(?!\d)/g, mask: "[PHONE]" },
+  { kind: "Phone", re: /(?<![\d+])(?:\+91[\s-]?)?[6-9]\d{9}(?!\d)/g, mask: "[PHONE]" },
   { kind: "Aadhaar", re: /\b\d{4} \d{4} \d{4}\b/g, mask: "[AADHAAR]" },
   { kind: "Member ID", re: /\b[A-Z]{2,4}-M-\d{5,}\b/g, mask: "[MEMBER_ID]" },
   { kind: "Nominee", re: /\b[A-Z][a-z]+ [A-Z][a-z]+(?= \((?:Mother|Father|Spouse|Wife|Husband|Son|Daughter)\))/g, mask: "[NOMINEE]" },
