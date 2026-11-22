@@ -1,7 +1,11 @@
-"""Builds demo/aarogya-policy.pdf, the FICTIONAL sample policy (Aarogya is a made-up insurer).
+"""Builds the FICTIONAL sample policies (Aarogya is a made-up insurer; every person is made up too).
 
-Run: python3 scripts/make-sample-pdf.py
-Then: OUT=demo/redacted-policy.json npm run check:redact
+Run: python3 scripts/make-sample-pdf.py   (writes demo/aarogya-policy.pdf, demo/sample-arjun.pdf, demo/sample-priya.pdf)
+Then copy them to public/demo/ and regenerate the fixtures:
+  OUT=demo/redacted-policy.json npm run check:redact
+  OUT=demo/redacted-arjun.json npm run check:redact -- demo/sample-arjun.pdf
+  OUT=demo/redacted-priya.json npm run check:redact -- demo/sample-priya.pdf
+Same insurer and benefits in all three; only the person and their policy / member numbers differ.
 Each line is drawn as one text line so unpdf extracts it the same way (tables come out flattened).
 """
 from reportlab.lib.pagesizes import A4
@@ -22,11 +26,11 @@ PAGES = [
         "Insurance is the subject matter of the solicitation. Please read the policy wording carefully.",
         "This is a FICTIONAL sample document created for a hackathon demo.",
         "#Field Details",
-        "Policy No. AGI-7781-2290-00",
-        "Policyholder Mr ROHAN MEHTA",
-        "Address Flat 302, Sunrise Residency, 12th Main, Indiranagar, Bengaluru 560038",
-        "Mobile / Email 9876543210 / rohan.mehta@example.com",
-        "PAN ABCDE1234F",
+        "Policy No. {policy_no}",
+        "Policyholder {title} {name}",
+        "Address {address}",
+        "Mobile / Email {mobile} / {email}",
+        "PAN {pan}",
         "Product Aarogya Shield Premier (Individual)",
         "Policy period 01/01/2026 00:00 hrs to 31/12/2028 23:59 hrs",
         "Policy tenure 3 years",
@@ -37,7 +41,7 @@ PAGES = [
         "Intermediary DIRECT",
         "#Insured person",
         "Member ID Name DOB Age Gender Relationship Sum Insured Nominee",
-        "AGI-M-551902 ROHAN MEHTA 14/03/1992 33 Male Self Rs. 30,00,000 Sunita Mehta (Mother)",
+        "{member_id} {name} {dob} {age} {gender} Self Rs. 30,00,000 {nominee}",
     ],
     [
         "#Benefits table",
@@ -112,7 +116,30 @@ PAGES = [
 ]
 
 
-def main(path="demo/aarogya-policy.pdf"):
+PEOPLE = {
+    "demo/aarogya-policy.pdf": dict(
+        policy_no="AGI-7781-2290-00", title="Mr", name="ROHAN MEHTA",
+        address="Flat 302, Sunrise Residency, 12th Main, Indiranagar, Bengaluru 560038",
+        mobile="9876543210", email="rohan.mehta@example.com", pan="ABCDE1234F",
+        member_id="AGI-M-551902", dob="14/03/1992", age=33, gender="Male", nominee="Sunita Mehta (Mother)",
+    ),
+    # Age in the schedule is the age at policy start (1 Jan 2026); the app works the current age out from the DOB.
+    "demo/sample-arjun.pdf": dict(
+        policy_no="AGI-7781-3341-00", title="Mr", name="ARJUN RAO",
+        address="Flat 104, Palm Grove Apartments, 5th Cross, HSR Layout, Bengaluru 560102",
+        mobile="9812345670", email="arjun.rao@example.com", pan="BCDEF2345G",
+        member_id="AGI-M-562114", dob="02/02/1999", age=26, gender="Male", nominee="Lakshmi Rao (Mother)",
+    ),
+    "demo/sample-priya.pdf": dict(
+        policy_no="AGI-7781-4412-00", title="Ms", name="PRIYA NAIR",
+        address="No. 21, Lake View Layout, 2nd Stage, Jayanagar, Bengaluru 560011",
+        mobile="9845012345", email="priya.nair@example.com", pan="CDEFG3456H",
+        member_id="AGI-M-573226", dob="18/06/1995", age=30, gender="Female", nominee="Anil Nair (Father)",
+    ),
+}
+
+
+def main(path, person):
     c = canvas.Canvas(path, pagesize=A4)
     c.setTitle("Aarogya Shield Premier - Policy Schedule (FICTIONAL sample)")
     c.setAuthor("Claimable demo")
@@ -122,11 +149,11 @@ def main(path="demo/aarogya-policy.pdf"):
         for h in HEADER:
             c.drawString(LEFT, y, h)
             y -= 10
-        c.drawString(LEFT, y, f"Policy No. AGI-7781-2290-00 Page No. {n}")
+        c.drawString(LEFT, y, f"Policy No. {person['policy_no']} Page No. {n}")
         y -= 20
         for line in lines:
             bold = line.startswith("#")
-            text = line[1:] if bold else line
+            text = (line[1:] if bold else line).format(**person)
             font, size = (BOLD, SIZE + 2) if bold else (FONT, SIZE)
             if stringWidth(text, font, size) > W - LEFT - RIGHT:
                 raise SystemExit(f"line too wide on page {n}: {text}")
@@ -141,4 +168,5 @@ def main(path="demo/aarogya-policy.pdf"):
 
 
 if __name__ == "__main__":
-    main()
+    for out, person in PEOPLE.items():
+        main(out, person)

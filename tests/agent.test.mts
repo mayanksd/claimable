@@ -11,12 +11,12 @@ import type { About, FocusId } from "../src/lib/agent/types.ts";
 
 const e = ExtractionSchema.parse(JSON.parse(readFileSync("demo/extraction.json", "utf8")));
 const text: string = JSON.parse(readFileSync("demo/redacted-policy.json", "utf8")).text;
-const about = (focus: FocusId[], ageBand: About["ageBand"] = "25to34"): About => ({ ageBand, gender: "male", focus });
+const about = (focus: FocusId[], ageBand: About["ageBand"] = "25to34", gender: About["gender"] = "male"): About => ({ ageBand, gender, focus });
 
 function run(a: About, limit?: number) {
   const rules = readCheckupRules(e, text);
   const s = shortlist(a);
-  const checked = applyLivePrices([...s.heroes, ...s.supporting, ...s.genetic], []).map((p) => checkCoverage(p, rules));
+  const checked = applyLivePrices([...s.heroes, ...s.supporting, ...s.tests, ...s.genetic], []).map((p) => checkCoverage(p, rules));
   return { rules, checked, plan: fitPlan(checked, limit ?? rules.limitInr, a) };
 }
 
@@ -50,11 +50,13 @@ test("plans never exceed the limit and use at most one hero", () => {
   const all: FocusId[][] = [[], ["heart"], ["sugar"], ["hormones"], ["longevity"], ["gut"], ["genetic"], ["heart", "hormones"], ["longevity", "genetic"]];
   for (const focus of all)
     for (const band of ["under25", "25to34", "35to44", "45plus"] as const)
+      for (const gender of ["male", "female", "unspecified"] as const)
       for (const limit of [0, 2000, 5000, 15000, 30000, 60000]) {
-        const { plan } = run(about(focus, band), limit);
+        const { plan } = run(about(focus, band, gender), limit);
         assert.ok(plan.totalInr <= limit, `${focus} ${band} ${limit}: ${plan.totalInr}`);
         assert.ok(plan.items.filter((p) => p.category === "hero").length <= 1);
         assert.ok(plan.items.every((p) => p.category !== "genetic" && p.coverage === "covered"));
+        assert.ok(plan.items.every((p) => p.cityConfirmed && p.id !== "supprx-ultra"), "Supp[Rx] is never planned");
       }
 });
 

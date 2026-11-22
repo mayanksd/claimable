@@ -107,7 +107,15 @@ export function AgentRun({ extraction, policyText, about, fromPolicy, demo, onBa
       });
       if (!cancelled) {
         await wait(reduce ? 0 : 350);
-        setPack({ plan, rules, genetic: p.genetic, checklist: p.checklist, alternatives: checked.filter((c) => c.coverage === "covered" && !plan.items.includes(c) && c.category !== "genetic") });
+        setPack({
+          plan,
+          rules,
+          genetic: p.genetic,
+          checklist: p.checklist,
+          ageGroup: sl.ageGroup.map((a) => ({ ...a, checked: checked.find((c) => c.id === a.test.id) ?? null })),
+          about,
+          alternatives: checked.filter((c) => c.coverage === "covered" && !plan.items.includes(c) && c.category !== "genetic" && c.category !== "test"),
+        });
       }
     })().catch(() => {});
     return () => {

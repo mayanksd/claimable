@@ -11,22 +11,13 @@ import { Dashboard } from "@/components/dashboard/Dashboard";
 import { UploadPanel } from "@/components/upload/UploadPanel";
 import type { AnalysisResult, AnalyzeEvent } from "@/lib/analysis";
 import { ExtractionSchema } from "@/lib/schema";
-import { cachedAnswers, demoExtraction, demoFirstName, demoProfile, demoRedactedText, demoRedactions } from "@/lib/demo";
+import { cachedAnswers } from "@/lib/demo";
+import { DEFAULT_SAMPLE, SAMPLES, type SampleId } from "@/lib/samples";
 import { isCheckupPerk } from "@/lib/perks";
 import type { About } from "@/lib/agent/types";
 import { AgentHome } from "@/components/agent/AgentHome";
 import { AboutYou, BackLink } from "@/components/agent/AboutYou";
 import { AgentRun } from "@/components/agent/AgentRun";
-
-/** The fictional sample policy, loaded by default so a stranger can try everything with zero setup. */
-const SAMPLE: AnalysisResult = {
-  extraction: demoExtraction,
-  redactedText: demoRedactedText,
-  redactions: demoRedactions,
-  firstName: demoFirstName,
-  profile: demoProfile,
-  sample: true,
-};
 
 type Screen = "home" | "upload" | "about" | "agent" | "dashboard";
 
@@ -57,8 +48,22 @@ export function App() {
     setScreenRaw(s);
     window.scrollTo(0, 0);
   };
-  // No upload yet: the sample policy powers the home screen, agent, dashboard and chat.
-  const current = result ?? SAMPLE;
+  // No upload yet: the chosen sample policy (Arjun by default) powers home, agent, dashboard and chat.
+  const [sampleId, setSampleId] = useState<SampleId>(DEFAULT_SAMPLE);
+  const current = result ?? SAMPLES[sampleId].result;
+  // Cached demo answers: per persona sample; the original Aarogya sample (upload screen) keeps its own.
+  const answers = result ? cachedAnswers : SAMPLES[sampleId].cachedAnswers;
+
+  /** "Try it as:" on home: switch to that sample (drops an uploaded policy). */
+  function pickSample(id: SampleId) {
+    setSampleId(id);
+    setResult(null);
+    setFresh(false);
+    setAbout(null);
+    try {
+      localStorage.removeItem(KEY);
+    } catch {}
+  }
   // Confetti only for a result that was just produced, not one restored after a reload.
   const [fresh, setFresh] = useState(false);
 
@@ -169,7 +174,10 @@ export function App() {
               <AgentHome
                 limitInr={checkup?.capInr ?? null}
                 reimbursement={checkup?.claimMode !== "cashless"}
-                sample={!!current.sample}
+                samples={Object.values(SAMPLES).map((x) => ({ id: x.id, emoji: x.emoji, label: x.label }))}
+                selected={result ? null : sampleId}
+                ownLabel={result ? (result.sample ? "📄 Aarogya sample" : "📄 Your policy") : null}
+                onPick={pickSample}
                 onMax={startAgent}
                 onDashboard={() => go("dashboard")}
                 onChat={() => go("dashboard", { chat: true })}
@@ -206,7 +214,7 @@ export function App() {
                 partBFailed={!!current.partBFailed}
                 onUploadPolicy={uploadAnother}
                 demo={demo}
-                cachedAnswers={cachedAnswers}
+                cachedAnswers={answers}
                 revealed={fresh}
                 onMaxCheckup={startAgent}
                 focusChat={focusChat}

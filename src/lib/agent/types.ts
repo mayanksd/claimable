@@ -12,7 +12,8 @@ export const FOCUS: { id: FocusId; emoji: string; label: string }[] = [
   { id: "genetic", emoji: "🧬", label: "Genetic risk (DNA)" },
 ];
 
-export type About = { ageBand: AgeBand | null; gender: Gender; focus: FocusId[] };
+/** `age` only when it came from the policy and wasn't changed (the DOB itself never reaches the browser). */
+export type About = { ageBand: AgeBand | null; age?: number | null; gender: Gender; focus: FocusId[] };
 
 export type CheckupRules = {
   found: boolean;
@@ -30,7 +31,7 @@ export type CheckupRules = {
 
 export type Coverage = "covered" | "prescription" | "ask";
 
-export type PricedProvider = Provider & { priceSource: "live" | "listed"; liveUrl?: string };
+export type PricedProvider = Provider & { priceSource: "live" | "listed" | "typical"; liveUrl?: string };
 export type CheckedProvider = PricedProvider & { coverage: Coverage; coverageWhy: string };
 
 export type Plan = { items: CheckedProvider[]; totalInr: number; limitInr: number; score: number; duplicateTags: string[] };

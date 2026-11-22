@@ -94,7 +94,7 @@ export function AboutYou({ profile, initial, onBack, onRun }: Props) {
         size="lg"
         className="mt-6 h-14 w-full rounded-2xl text-lg"
         disabled={!ageBand}
-        onClick={() => onRun({ ageBand, gender, focus }, known && !changed)}
+        onClick={() => onRun({ ageBand, age: known && !changed ? (profile?.age ?? null) : null, gender, focus }, known && !changed)}
       >
         Build my check-up plan ✨
       </Button>

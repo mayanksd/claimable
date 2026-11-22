@@ -19,7 +19,7 @@ export function applyLivePrices(providers: Provider[], live: LivePrice[]): Price
     const l = live.find((x) => x.id === p.id);
     return validLivePrice(p, l)
       ? { ...p, priceInr: Math.round(l!.priceInr), priceSource: "live" as const, liveUrl: l!.url }
-      : { ...p, priceSource: "listed" as const };
+      : { ...p, priceSource: p.priceKind === "typical" ? ("typical" as const) : ("listed" as const) };
   });
 }
 

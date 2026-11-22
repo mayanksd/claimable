@@ -3,12 +3,18 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { inr } from "@/lib/format";
+import type { SampleId } from "@/lib/samples";
+import { cn } from "@/lib/utils";
 
 type Props = {
   /** The check-up limit in the loaded policy; null if it has none. */
   limitInr: number | null;
   reimbursement: boolean;
-  sample: boolean;
+  samples: { id: SampleId; emoji: string; label: string }[];
+  /** The sample in use, or null when an uploaded policy is loaded (then `ownLabel` names it). */
+  selected: SampleId | null;
+  ownLabel: string | null;
+  onPick: (id: SampleId) => void;
   onMax: () => void;
   onDashboard: () => void;
   onChat: () => void;
@@ -16,7 +22,7 @@ type Props = {
 };
 
 /** Landing: the check-up agent first, the full dashboard and chat right below. */
-export function AgentHome({ limitInr, reimbursement, sample, onMax, onDashboard, onChat, onOwnPolicy }: Props) {
+export function AgentHome({ limitInr, reimbursement, samples, selected, ownLabel, onPick, onMax, onDashboard, onChat, onOwnPolicy }: Props) {
   return (
     <div className="mx-auto w-full max-w-[640px] px-4 pt-10 pb-16 text-center sm:pt-14">
       <p className="text-sm font-semibold tracking-wide text-brand">🩺 Health insurance perk finder</p>
@@ -26,15 +32,6 @@ export function AgentHome({ limitInr, reimbursement, sample, onMax, onDashboard,
         <span className="bg-gradient-to-r from-warm to-warm-2 bg-clip-text text-transparent">Start using them.</span>
       </h1>
       <p className="mt-3 text-lg text-muted-foreground">Discover the perks you&apos;re already paying for.</p>
-
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-        <span className="rounded-full bg-white px-3 py-1 font-semibold shadow-sm ring-1 ring-border">
-          {sample ? "📄 Using the sample policy (fictional Aarogya)" : "📄 Using your policy"}
-        </span>
-        <button type="button" onClick={onOwnPolicy} className="min-h-11 cursor-pointer rounded-lg px-2 font-semibold text-brand hover:underline">
-          {sample ? "Use my own policy" : "Use another policy"}
-        </button>
-      </div>
 
       {limitInr ? (
         <motion.button
@@ -65,6 +62,54 @@ export function AgentHome({ limitInr, reimbursement, sample, onMax, onDashboard,
           <p className="mt-1 text-sm text-muted-foreground">Your other perks are still waiting on the dashboard.</p>
         </div>
       )}
+
+      <div className="mt-5 rounded-3xl border bg-white/80 p-4 text-left shadow-soft backdrop-blur sm:p-5">
+        <p className="text-sm font-bold text-muted-foreground" id="try-as">
+          Try it as: <span className="font-medium">(fictional sample policies)</span>
+        </p>
+        <div role="radiogroup" aria-labelledby="try-as" className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+          {samples.map((x) => {
+            const on = selected === x.id;
+            return (
+              <button
+                key={x.id}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => onPick(x.id)}
+                className={cn(
+                  "flex min-h-14 cursor-pointer items-center gap-2.5 rounded-2xl border-2 px-3.5 py-2 text-left text-base font-bold transition-all",
+                  on ? "border-brand bg-brand-soft text-brand shadow-sm" : "border-border bg-white hover:border-brand-line",
+                )}
+              >
+                <span aria-hidden className="text-2xl">
+                  {x.emoji}
+                </span>
+                {x.label}
+                {on && <span className="ml-auto text-xs font-bold">✓</span>}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={onOwnPolicy}
+            aria-checked={!!ownLabel}
+            role="radio"
+            className={cn(
+              "col-span-2 flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-3.5 py-2 text-base font-bold transition-all sm:col-span-1",
+              ownLabel ? "border-brand bg-brand-soft text-brand" : "border-brand-line text-brand hover:bg-brand-soft",
+            )}
+          >
+            {ownLabel ? (
+              <>
+                {ownLabel} <span className="text-xs font-semibold underline">change</span>
+              </>
+            ) : (
+              "📄 Use my own policy"
+            )}
+          </button>
+        </div>
+      </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <SecondaryCard emoji="📊" label="See my full policy dashboard" onClick={onDashboard} />

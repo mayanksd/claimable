@@ -4,19 +4,29 @@ import { ArrowRight, CalendarPlus, ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Extraction } from "@/lib/schema";
-import type { CheckedProvider, CheckupRules, Plan } from "@/lib/agent/types";
+import type { About, CheckedProvider, CheckupRules, Plan } from "@/lib/agent/types";
+import type { AgeGroupTest } from "@/lib/agent/plan";
+import { AGE_BANDS } from "@/lib/profile";
 import { asOfLabel } from "@/lib/agent/steps";
 import { TAG_LABEL } from "@/lib/agent/plan";
 import { reminderDate, reminderIcs } from "@/lib/agent/pack";
-import { MORE_LABS } from "@/data/providers";
+import { MORE_LABS, UNCONFIRMED } from "@/data/providers";
 import { formatDay, nextPolicyYearStart } from "@/lib/policyDates";
 import { inr } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export type PackData = { plan: Plan; rules: CheckupRules; genetic: CheckedProvider[]; checklist: string[]; alternatives: CheckedProvider[] };
+export type PackData = {
+  plan: Plan;
+  rules: CheckupRules;
+  genetic: CheckedProvider[];
+  checklist: string[];
+  alternatives: CheckedProvider[];
+  ageGroup: (AgeGroupTest & { checked: CheckedProvider | null })[];
+  about: About;
+};
 
 export function PlanOutput({ data, extraction, onExplore }: { data: PackData; extraction: Extraction; onExplore: () => void }) {
-  const { plan, rules, genetic, checklist, alternatives } = data;
+  const { plan, rules, genetic, checklist, alternatives, ageGroup, about } = data;
   const pct = rules.limitInr ? Math.min(100, (plan.totalInr / rules.limitInr) * 100) : 0;
   const reset = extraction.checkupFrequency?.everyYear !== false ? nextPolicyYearStart(extraction.policy.startDate, new Date()) : null;
 
@@ -60,6 +70,8 @@ export function PlanOutput({ data, extraction, onExplore }: { data: PackData; ex
         </div>
       </section>
 
+      {ageGroup.length > 0 && <AgeGroupCard items={ageGroup} about={about} plan={plan} />}
+
       {genetic.map((g) => (
         <section key={g.id} className="rounded-3xl border border-warn-line bg-warn-soft p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-2">
@@ -95,7 +107,7 @@ export function PlanOutput({ data, extraction, onExplore }: { data: PackData; ex
         </div>
       </section>
 
-      {(alternatives.length > 0 || MORE_LABS.length > 0) && (
+      {(alternatives.length > 0 || UNCONFIRMED.length > 0 || MORE_LABS.length > 0) && (
         <details className="group rounded-3xl border bg-white p-5 shadow-soft sm:p-6">
           <summary className="cursor-pointer list-none font-display text-lg font-extrabold">
             More options to compare <span className="text-sm font-medium text-muted-foreground group-open:hidden">· tap to open</span>
@@ -114,7 +126,21 @@ export function PlanOutput({ data, extraction, onExplore }: { data: PackData; ex
               ))}
             </ul>
           )}
-          <p className="mt-4 text-sm font-semibold text-muted-foreground">Bengaluru labs to compare (prices on their sites)</p>
+          {UNCONFIRMED.length > 0 && (
+            <ul className="mt-3 grid gap-1.5 text-sm">
+              {UNCONFIRMED.map((p) => (
+                <li key={p.id} className="flex flex-wrap justify-between gap-2">
+                  <a href={p.bookingUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand hover:underline">
+                    {p.name} {p.product}
+                  </a>
+                  <span className="text-muted-foreground">
+                    {inr(p.priceInr)} · <span className="text-warn">city availability not confirmed</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-4 text-sm font-semibold text-muted-foreground">More labs to compare (prices on their sites)</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {MORE_LABS.map((l) => (
               <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center gap-1 rounded-full border px-3 text-sm font-semibold hover:bg-brand-soft max-sm:min-h-11">
@@ -134,7 +160,42 @@ export function PlanOutput({ data, extraction, onExplore }: { data: PackData; ex
   );
 }
 
-const sourceLabel = (p: CheckedProvider) => (p.priceSource === "live" ? "live" : `listed ${asOfLabel(p.asOf)}`);
+const sourceLabel = (p: CheckedProvider) =>
+  p.priceSource === "live" ? "live" : p.priceSource === "typical" ? "typical price" : `listed ${asOfLabel(p.asOf)}`;
+
+/** "Commonly included for your age group": what's in the plan, what to ask about, what's usually for later. */
+function AgeGroupCard({ items, about, plan }: { items: PackData["ageGroup"]; about: About; plan: Plan }) {
+  const band = AGE_BANDS.find((b) => b.id === about.ageBand)?.label;
+  const who = [about.gender === "female" ? "women" : about.gender === "male" ? "men" : "adults", band ? band : ""].filter(Boolean).join(" ");
+  return (
+    <section className="rounded-3xl border bg-white p-5 shadow-soft sm:p-6">
+      <h2 className="font-display text-xl font-extrabold">👥 Commonly included for {who}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">What check-ups for your age group usually include — not medical advice.</p>
+      <ul className="mt-3 grid gap-2.5">
+        {items.map(({ test, status, checked }) => {
+          const inPlan = plan.items.some((p) => p.id === test.id);
+          const [badge, tone, line] = inPlan
+            ? ["In your plan", "bg-good-soft text-good-ink", `${test.covers} · about ${inr(test.priceInr)}`]
+            : status === "later"
+              ? ["Not yet", "bg-secondary text-muted-foreground", `${test.ageNote ? test.ageNote[0].toUpperCase() + test.ageNote.slice(1) : "For an older age group"} — not added for your age group.`]
+              : checked?.coverage === "ask"
+                ? ["Ask your insurer", "bg-warn-soft text-warn", `${checked.coverageWhy} About ${inr(test.priceInr)}.`]
+                : ["Doesn't fit", "bg-secondary text-muted-foreground", "Would go over your limit or repeat tests already in the plan."];
+          return (
+            <li key={test.id} className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 rounded-2xl border px-3.5 py-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="font-bold">{test.product}</p>
+                <p className="text-sm text-muted-foreground">{line}</p>
+              </div>
+              <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold", tone)}>{badge}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-3 text-xs text-muted-foreground">Ask your doctor which tests suit you.</p>
+    </section>
+  );
+}
 
 function ProviderCard({ p, hero, overlap, plain }: { p: CheckedProvider; hero: boolean; overlap: CheckedProvider[]; plain?: boolean }) {
   const shared = overlap.length ? p.tags.filter((t) => overlap.some((o) => o.tags.includes(t))).map((t) => TAG_LABEL[t] ?? t) : [];
@@ -158,7 +219,7 @@ function ProviderCard({ p, hero, overlap, plain }: { p: CheckedProvider; hero: b
           <MapPin className="size-3.5" /> {p.location}
         </span>
         <span className={cn("rounded-full px-2 py-0.5", p.priceSource === "live" ? "bg-good-soft text-good-ink" : "bg-secondary")}>
-          {p.priceSource === "live" ? "● live price" : `listed ${asOfLabel(p.asOf)}`}
+          {p.priceSource === "live" ? "● live price" : sourceLabel(p)}
         </span>
         {p.coverage === "covered" && <span className="rounded-full bg-good-soft px-2 py-0.5 text-good-ink">✓ Covered</span>}
         {p.note && <span className="text-warn">⚠ {p.note}</span>}
@@ -166,8 +227,8 @@ function ProviderCard({ p, hero, overlap, plain }: { p: CheckedProvider; hero: b
       {shared.length > 0 && <p className="mt-1.5 text-xs text-muted-foreground">Some overlap with your other package: {shared.slice(0, 4).join(", ")}.</p>}
       <Button asChild variant={hero ? "hero" : "brand"} className="mt-3 w-full sm:w-auto">
         <a href={p.liveUrl ?? p.bookingUrl} target="_blank" rel="noopener noreferrer">
-          Book now <ArrowRight className="size-4" />
-          <span className="sr-only"> (opens {p.name} in a new tab)</span>
+          {p.category === "test" ? "Find a lab" : "Book now"} <ArrowRight className="size-4" />
+          <span className="sr-only"> (opens {p.category === "test" ? "a lab finder" : p.name} in a new tab)</span>
         </a>
       </Button>
     </div>

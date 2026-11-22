@@ -3,7 +3,7 @@ import { PROVIDERS, PRICES_AS_OF, type Provider } from "../../data/providers.ts"
 import { AGE_BANDS } from "../profile.ts";
 import type { Extraction } from "../schema.ts";
 import { readCheckupRules, type Evidence } from "./rules.ts";
-import { TAG_LABEL, checkCoverage, fitPlan, shortlist, tagWeights } from "./plan.ts";
+import { TAG_LABEL, checkCoverage, fitPlan, shortlist, tagWeights, type AgeGroupTest } from "./plan.ts";
 import { applyLivePrices, type LivePrice } from "./prices.ts";
 import { claimChecklist } from "./pack.ts";
 import { FOCUS, type About, type CheckedProvider, type CheckupRules, type Plan } from "./types.ts";
@@ -52,9 +52,10 @@ export function stepYou(about: About, fromPolicy: boolean): StepResult {
   const body = { male: "Male", female: "Female", unspecified: "Body not specified" }[about.gender];
   const focus = about.focus.map((f) => FOCUS.find((x) => x.id === f)!.label);
   return {
-    summary: [band ? `Age ${band}` : "Age not given", body, focus.length ? list(focus) : "General check"].join(" · "),
+    summary: [about.age ? `Age ${about.age}` : band ? `Age ${band}` : "Age not given", body, focus.length ? list(focus) : "General check"].join(" · "),
     why: [
-      fromPolicy ? "Age band and body come from your policy's member details; you can change them." : "You chose these on the previous screen.",
+      fromPolicy ? "Age and body come from your policy's member details; you can change them." : "You chose these on the previous screen.",
+      band ? `Age group used for "commonly included" tests: ${band}.` : "No age group, so only tests for every age are added.",
       "Your date of birth is never sent anywhere — only the age band is used.",
       focus.length ? `Focus areas get extra weight when packages are compared: ${list(focus)}.` : "No focus picked, so packages are compared for broad, everyday coverage.",
     ],
@@ -68,18 +69,29 @@ export function stepShortlist(about: About) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([t]) => TAG_LABEL[t] ?? t);
-  const candidates = [...s.heroes, ...s.supporting, ...s.genetic];
+  const candidates = [...s.heroes, ...s.supporting, ...s.tests, ...s.genetic];
+  const later = s.ageGroup.filter((a) => a.status === "later");
   const result: StepResult = {
-    summary: `1 premium screening + ${s.supporting.length} supporting packages${s.genetic.length ? " + 1 DNA option" : ""}`,
+    summary: [
+      "1 premium screening",
+      `${s.supporting.length} supporting packages`,
+      s.tests.length ? `${s.tests.length} age-group test${s.tests.length === 1 ? "" : "s"}` : "",
+      s.genetic.length ? "1 DNA option" : "",
+    ]
+      .filter(Boolean)
+      .join(" + "),
     why: [
       `Commonly included for your age group and focus: ${list(top)}.`,
       `Premium screenings, best match first: ${s.heroes.map(providerLabel).join(" · ")}.`,
       `Supporting packages: ${s.supporting.map(providerLabel).join(" · ")}.`,
+      ...(s.tests.length ? [`Commonly included for your age group: ${s.tests.map((t) => t.product).join(" · ")}.`] : []),
+      ...later.map((a) => `${a.test.product}: ${a.test.ageNote ?? "for an older age group"} — not added for your age group.`),
+      "Supp[Rx] isn't planned: availability in Bengaluru isn't confirmed (it's under “More labs to compare”).",
       ...(s.genetic.length ? [`DNA option: ${s.genetic.map(providerLabel).join(" · ")} — checked separately.`] : []),
       "This is what these packages commonly include, not medical advice — ask your doctor which tests suit you.",
     ],
   };
-  return { shortlist: s, candidates, result };
+  return { shortlist: s, candidates, ageGroup: s.ageGroup as AgeGroupTest[], result };
 }
 
 /** Which packages to look up live (max 3): the top premium screenings, then the top supporting one. */
@@ -95,6 +107,7 @@ export function stepPrices(candidates: Provider[], live: LivePrice[], lookups: n
     why: [
       ...(note ? [note] : []),
       ...liveOnes.map((p) => `${providerLabel(p)}: ${inr(p.priceInr)} on ${new URL(p.liveUrl!).hostname} (live).`),
+      ...(priced.some((p) => p.priceSource === "typical") ? ["Age-group tests show a typical walk-in price at accredited labs."] : []),
       `Web lookups used: ${lookups} of 3. Only package names were searched — nothing about you or your policy.`,
       "A live price is used only if it's from the provider's own site and close to the listed price.",
     ],
