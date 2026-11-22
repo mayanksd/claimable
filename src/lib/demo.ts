@@ -2,6 +2,7 @@ import extractionJson from "../../demo/extraction.json";
 import cachedAnswersJson from "../../demo/cached-answers.json";
 import redactedPolicy from "../../demo/redacted-policy.json";
 import { ExtractionSchema, type Extraction } from "./schema";
+import type { Profile } from "./profile";
 
 /** Validated against the schema so the demo data and live output share one shape. */
 export const demoExtraction: Extraction = ExtractionSchema.parse(extractionJson);
@@ -10,5 +11,6 @@ export const demoExtraction: Extraction = ExtractionSchema.parse(extractionJson)
 export const demoRedactedText: string = redactedPolicy.text;
 export const demoRedactions = { count: redactedPolicy.count, kinds: redactedPolicy.kinds };
 export const demoFirstName: string | null = redactedPolicy.firstName;
+export const demoProfile: Profile = redactedPolicy.profile as Profile;
 
 export const cachedAnswers: Record<string, string> = cachedAnswersJson;

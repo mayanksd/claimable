@@ -4,9 +4,9 @@
   "policy": {
     "insurer": "Aarogya General Insurance (fictional)",
     "product": "Aarogya Shield Premier",
-    "sumInsuredInr": 1000000,
+    "sumInsuredInr": 3000000,
     "tenureYears": 3,
-    "annualPremiumInr": 12800,
+    "annualPremiumInr": 19200,
     "periodLabel": "1 Jan 2026 – 31 Dec 2028",
     "startDate": "2026-01-01"
   },
@@ -29,12 +29,12 @@
       "emoji": "🩺",
       "name": "Free annual health check-up",
       "category": "use_now",
-      "capInr": 10000,
-      "capLabel": "₹10,000",
+      "capInr": 30000,
+      "capLabel": "₹30,000",
       "frequency": "per_year",
-      "claimMode": "cashless",
+      "claimMode": "reimbursement",
       "useItOrLoseIt": true,
-      "oneLiner": "Book in the app at a partner lab. No bills to pay.",
+      "oneLiner": "Any accredited lab; advanced screening like MRI or DEXA allowed. Pay, then claim back.",
       "sourcePage": 2
     },
     {
@@ -169,8 +169,8 @@
     }
   ],
   "heroValue": {
-    "annualPerksValueInr": 27000,
-    "ratioToPremium": 2.1,
+    "annualPerksValueInr": 47000,
+    "ratioToPremium": 2.4,
     "includedPerkIds": [
       "opd-dental",
       "health-checkup",
@@ -347,7 +347,7 @@
     {
       "id": "room-rent",
       "emoji": "🏨",
-      "title": "Room rent capped at ₹10,000 a day",
+      "title": "Room rent capped at ₹30,000 a day",
       "why": "A pricier room cuts your whole claim proportionately, not just the room.",
       "severity": "high",
       "sourcePage": 2

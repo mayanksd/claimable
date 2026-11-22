@@ -26,7 +26,8 @@ test("only unlimited/free perks → they fill the slots", () => {
 
 test("tags", () => {
   const byId = Object.fromEntries(demo.perks.map((p: { id: string }) => [p.id, p]));
-  assert.equal(effortTag(byId["health-checkup"]), "Easy");
+  assert.equal(effortTag(byId["teleconsult"]), "Easy");
+  assert.equal(effortTag(byId["health-checkup"]), "Needs a claim", "the ₹30,000 check-up is reimbursement");
   assert.equal(effortTag(byId["opd-dental"]), "Needs a claim");
   assert.equal(effortTag(byId["restore"]), null);
 });
@@ -59,8 +60,8 @@ test("hero total: all per-year capped use-now perks; per-policy limits excluded"
   assert.equal(hero.ratioToPremium, 2);
 });
 
-test("hero total for the sample stays ₹27,000", () => {
-  assert.equal(computeHeroValue(demo).annualPerksValueInr, 27000);
+test("hero total for the ₹30L sample: ₹47,000 (check-up ₹30,000 + dental + OPD + spectacles)", () => {
+  assert.equal(computeHeroValue(demo).annualPerksValueInr, 47000);
   assert.equal(computeHeroValue({ ...demo, policy: { ...demo.policy, annualPremiumInr: 0 } }).ratioToPremium, 0);
 });
 
