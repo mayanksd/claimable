@@ -38,12 +38,11 @@ type Props = {
   partBFailed?: boolean;
   /** "Max my ₹X →" on the check-up card opens the check-up agent (else the inline planner). */
   onMaxCheckup?: () => void;
-  focusChat?: boolean;
 };
 
 const EMPLOYER_TIP = "Tip: check your employer's group policy — they often cover maternity from day one.";
 
-export function Dashboard({ extraction, redactedText, firstName, demo, cachedAnswers, revealed, pending, partBFailed, onUploadPolicy, onMaxCheckup, focusChat }: Props) {
+export function Dashboard({ extraction, redactedText, firstName, demo, cachedAnswers, revealed, pending, partBFailed, onUploadPolicy, onMaxCheckup }: Props) {
   // Hero total is recomputed in code (also for saved results from older builds).
   const e = useMemo(() => withComputedHero(withSourcesOnly(extraction)), [extraction]);
   const [tab, setTab] = useState("perks");
@@ -163,7 +162,7 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
         </div>
       </main>
       <aside className="min-w-0">
-        <ChatPanel extraction={e} redactedText={redactedText} demo={demo} cached={cachedAnswers} focusOnMount={focusChat} />
+        <ChatPanel extraction={e} redactedText={redactedText} demo={demo} cached={cachedAnswers} />
       </aside>
       <ChatFab />
     </div>

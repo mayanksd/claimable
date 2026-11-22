@@ -8,6 +8,7 @@ import { computeHeroValue, heroMode } from "@/lib/perks";
 import { withSourcesOnly } from "@/lib/extraction";
 import { Nav } from "@/components/Nav";
 import { Dashboard } from "@/components/dashboard/Dashboard";
+import { ChatView } from "@/components/chat/ChatView";
 import { UploadPanel } from "@/components/upload/UploadPanel";
 import type { AnalysisResult, AnalyzeEvent } from "@/lib/analysis";
 import { ExtractionSchema } from "@/lib/schema";
@@ -19,7 +20,7 @@ import { AgentHome } from "@/components/agent/AgentHome";
 import { AboutYou } from "@/components/agent/AboutYou";
 import { AgentRun } from "@/components/agent/AgentRun";
 
-type Screen = "home" | "upload" | "about" | "agent" | "dashboard";
+type Screen = "home" | "upload" | "about" | "agent" | "dashboard" | "chat";
 
 const KEY = "claimable:last-result";
 
@@ -41,10 +42,8 @@ export function App() {
   const [demo, setDemo] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [screen, setScreenRaw] = useState<Screen>("home");
-  const [focusChat, setFocusChat] = useState(false);
   const [about, setAbout] = useState<{ about: About; fromPolicy: boolean; run: number } | null>(null);
-  const go = (s: Screen, opts: { chat?: boolean } = {}) => {
-    setFocusChat(!!opts.chat);
+  const go = (s: Screen) => {
     setScreenRaw(s);
     window.scrollTo(0, 0);
   };
@@ -190,7 +189,7 @@ export function App() {
                 onPick={pickSample}
                 onMax={startAgent}
                 onDashboard={() => go("dashboard")}
-                onChat={() => go("dashboard", { chat: true })}
+                onChat={() => go("chat")}
                 onOwnPolicy={openUpload}
               />
             ) : view === "about" ? (
@@ -214,6 +213,16 @@ export function App() {
                 onBack={() => go("about")}
                 onExplore={() => go("dashboard")}
               />
+            ) : view === "chat" ? (
+              <ChatView
+                extraction={current.extraction}
+                redactedText={current.redactedText}
+                demo={demo}
+                cachedAnswers={answers}
+                checkupLimitInr={checkup?.capInr ?? null}
+                onMaxCheckup={startAgent}
+                onDashboard={() => go("dashboard")}
+              />
             ) : view === "dashboard" || view === "agent" ? (
               <Dashboard
                 extraction={current.extraction}
@@ -227,7 +236,6 @@ export function App() {
                 cachedAnswers={answers}
                 revealed={fresh}
                 onMaxCheckup={startAgent}
-                focusChat={focusChat}
               />
             ) : (
               <UploadPanel demo={demo} onDone={show} onUpdate={applyUpdate} initialError={uploadError} initialFile={carriedFile} />
