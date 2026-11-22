@@ -1,5 +1,5 @@
 import type { AnalyzeEvent } from "./analysis";
-import { demoExtraction, demoFirstName, demoRedactedText, demoRedactions } from "./demo";
+import { demoExtraction, demoFirstName, demoProfile, demoRedactedText, demoRedactions } from "./demo";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -17,6 +17,7 @@ export async function* demoEvents(): AsyncGenerator<AnalyzeEvent> {
       redactedText: demoRedactedText,
       redactions: demoRedactions,
       firstName: demoFirstName,
+      profile: demoProfile,
       sample: true,
     },
   };

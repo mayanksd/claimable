@@ -27,9 +27,11 @@ type Props = {
   sumInsuredInr?: number;
   /** e.g. "Perks this plan can include" for wording-only uploads. */
   title?: string;
+  /** Opens the check-up agent instead of the inline planner. */
+  onMaxCheckup?: () => void;
 };
 
-export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupResetNote, sumInsuredInr = 0, title = "Use these this week" }: Props) {
+export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupResetNote, sumInsuredInr = 0, title = "Use these this week", onMaxCheckup }: Props) {
   const [open, setOpen] = useState(false);
   const [planFor, setPlanFor] = useState<string | null>(null);
 
@@ -49,7 +51,7 @@ export function PerkGrid({ perks, policyText, claimed, onToggleClaimed, checkupR
         onToggleClaimed={() => onToggleClaimed(p.id)}
         resetNote={checkupResetNote}
         sumInsuredInr={sumInsuredInr}
-        onMaxCheckup={isCheckupPerk(p) ? () => setPlanFor((id) => (id === p.id ? null : p.id)) : undefined}
+        onMaxCheckup={isCheckupPerk(p) ? (onMaxCheckup ?? (() => setPlanFor((id) => (id === p.id ? null : p.id)))) : undefined}
       />
     </motion.div>
   );

@@ -1,6 +1,7 @@
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { model } from "@/lib/ai";
 import { redact } from "@/lib/redact";
+import { stripInjection } from "@/lib/agent/rules";
 import { ExtractionSchema } from "@/lib/schema";
 import { MAX_CHAT_MESSAGES, MAX_QUESTION_CHARS, NO_KEY_MESSAGE, type ChatErrorCode } from "@/lib/chat";
 import { loadPrompt } from "@/lib/server/prompts";
@@ -30,7 +31,8 @@ export async function POST(req: Request) {
 
   // The client already holds redacted text; mask again so nothing personal can reach the model
   // even if the stored text was tampered with or came from an older build.
-  const policyText = redact(body.redactedText).text;
+  // Lines addressed to an AI ("ignore previous instructions…") are dropped: policy text is data, not instructions.
+  const policyText = redact(stripInjection(body.redactedText)).text;
 
   const messages = body.messages.slice(-MAX_CHAT_MESSAGES).map((m) =>
     m.role === "user"

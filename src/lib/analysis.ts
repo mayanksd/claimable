@@ -1,4 +1,5 @@
 import type { Extraction } from "./schema";
+import type { Profile } from "./profile.ts";
 // Relative .ts import so the Node test runner can load this file too.
 import { SCANNED_PDF_MESSAGE } from "./limits.ts";
 
@@ -10,6 +11,8 @@ export type AnalysisResult = {
   redactions: Redactions;
   /** From the policyholder line, for the greeting. Kept in the browser; never sent to the model. */
   firstName?: string | null;
+  /** Age + gender read before masking (browser only; the DOB itself is never kept or sent). */
+  profile?: Profile | null;
   sample?: boolean;
   /** Part B (family, lifestyle, watch-out tabs) is still being extracted. */
   pending?: boolean;

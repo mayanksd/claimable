@@ -8,10 +8,19 @@ import { computeHeroValue, heroMode } from "@/lib/perks";
 import { withSourcesOnly } from "@/lib/extraction";
 import { Nav } from "@/components/Nav";
 import { Dashboard } from "@/components/dashboard/Dashboard";
+import { ChatView } from "@/components/chat/ChatView";
 import { UploadPanel } from "@/components/upload/UploadPanel";
 import type { AnalysisResult, AnalyzeEvent } from "@/lib/analysis";
 import { ExtractionSchema } from "@/lib/schema";
 import { cachedAnswers } from "@/lib/demo";
+import { DEFAULT_SAMPLE, SAMPLES, type SampleId } from "@/lib/samples";
+import { isCheckupPerk } from "@/lib/perks";
+import type { About } from "@/lib/agent/types";
+import { AgentHome } from "@/components/agent/AgentHome";
+import { AboutYou } from "@/components/agent/AboutYou";
+import { AgentRun } from "@/components/agent/AgentRun";
+
+type Screen = "home" | "upload" | "about" | "agent" | "dashboard" | "chat";
 
 const KEY = "claimable:last-result";
 
@@ -32,6 +41,28 @@ export function App() {
   const [ready, setReady] = useState(false);
   const [demo, setDemo] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [screen, setScreenRaw] = useState<Screen>("home");
+  const [about, setAbout] = useState<{ about: About; fromPolicy: boolean; run: number } | null>(null);
+  const go = (s: Screen) => {
+    setScreenRaw(s);
+    window.scrollTo(0, 0);
+  };
+  // No upload yet: the chosen sample policy (Arjun by default) powers home, agent, dashboard and chat.
+  const [sampleId, setSampleId] = useState<SampleId>(DEFAULT_SAMPLE);
+  const current = result ?? SAMPLES[sampleId].result;
+  // Cached demo answers: per persona sample; the original Aarogya sample (upload screen) keeps its own.
+  const answers = result ? cachedAnswers : SAMPLES[sampleId].cachedAnswers;
+
+  /** "Try it as:" on home: switch to that sample (drops an uploaded policy). */
+  function pickSample(id: SampleId) {
+    setSampleId(id);
+    setResult(null);
+    setFresh(false);
+    setAbout(null);
+    try {
+      localStorage.removeItem(KEY);
+    } catch {}
+  }
   // Confetti only for a result that was just produced, not one restored after a reload.
   const [fresh, setFresh] = useState(false);
 
@@ -47,7 +78,9 @@ export function App() {
     setRevealDone(false);
     setResult(r);
     setFresh(true);
-    window.scrollTo(0, 0);
+    setAbout(null);
+    // Straight into the check-up agent, pre-filled from this policy (the dashboard is one tap away).
+    go("about");
     try {
       localStorage.setItem(KEY, JSON.stringify(r));
     } catch {
@@ -68,6 +101,7 @@ export function App() {
       setResult(null);
       setFresh(false);
       setUploadError(u.notHealth);
+      setScreenRaw("upload");
       try {
         localStorage.removeItem(KEY);
       } catch {}
@@ -89,15 +123,25 @@ export function App() {
   const [carriedFile, setCarriedFile] = useState<File | null>(null);
   function uploadAnother(file: File) {
     setCarriedFile(file);
-    startOver();
+    startOver("upload");
   }
 
-  function startOver() {
+  /** "⬆️ Use my own policy": a fresh upload screen. The loaded policy stays until a new one is analysed. */
+  function openUpload() {
+    setAttempt((n) => n + 1);
+    setUploadError(null);
+    setCarriedFile(null);
+    go("upload");
+  }
+
+  /** Drops the uploaded policy: back to the sample on the home screen (or straight to upload). */
+  function startOver(to: Screen = "home") {
     setAttempt((n) => n + 1);
     setUploadError(null);
     setResult(null);
     setFresh(false);
-    window.scrollTo(0, 0);
+    setAbout(null);
+    go(to);
     try {
       localStorage.removeItem(KEY);
     } catch {}
@@ -109,40 +153,89 @@ export function App() {
   const finishReveal = useCallback(() => setRevealDone(true), []);
   // Nothing to celebrate (₹0, e.g. not really a health policy) → no reveal, no confetti.
   // Wording-only uploads and ₹0 totals get no reveal and no confetti (heroMode "wording" / "count").
-  const revealTotal = result ? computeHeroValue(withSourcesOnly(result.extraction)).annualPerksValueInr : 0;
+  const revealTotal = computeHeroValue(withSourcesOnly(current.extraction)).annualPerksValueInr;
   const revealing =
-    !!result && fresh && !revealDone && !reduceMotion && heroMode(withSourcesOnly(result.extraction)) === "value";
-  const view = !ready ? "loading" : result ? (revealing ? "reveal" : "dashboard") : "upload";
+    screen === "dashboard" && fresh && !revealDone && !reduceMotion && heroMode(withSourcesOnly(current.extraction)) === "value";
+  const view = !ready ? "loading" : revealing ? "reveal" : screen;
+  const checkup = withSourcesOnly(current.extraction).perks.find(isCheckupPerk) ?? null;
+  const startAgent = () => go("about");
 
   return (
     <MotionConfig reducedMotion="user">
-      <Nav sample={!!result?.sample} onStartOver={result ? startOver : undefined} />
+      <Nav
+        sample={!!current.sample}
+        active={view === "home" ? "home" : view === "upload" ? "upload" : null}
+        onHome={() => go("home")}
+        onUpload={openUpload}
+      />
       <AnimatePresence mode="wait" initial={false}>
         {view !== "loading" && (
           <motion.div
-            key={view === "upload" ? `upload-${attempt}` : view}
+            key={view === "upload" ? `upload-${attempt}` : view === "agent" ? `agent-${about?.run ?? 0}` : view}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: view === "reveal" ? 0.3 : 0.35, ease: "easeOut" }}
           >
-            {result && view === "reveal" ? (
-              <RevealCard
-                total={revealTotal}
-                onDone={finishReveal}
+            {view === "reveal" ? (
+              <RevealCard total={revealTotal} onDone={finishReveal} />
+            ) : view === "home" ? (
+              <AgentHome
+                limitInr={checkup?.capInr ?? null}
+                reimbursement={checkup?.claimMode !== "cashless"}
+                samples={Object.values(SAMPLES).map((x) => ({ id: x.id, emoji: x.emoji, label: x.label }))}
+                selected={result ? null : sampleId}
+                ownLabel={result ? (result.sample ? "📄 Aarogya sample" : "📄 Your policy") : null}
+                onPick={pickSample}
+                onMax={startAgent}
+                onDashboard={() => go("dashboard")}
+                onChat={() => go("chat")}
+                onOwnPolicy={openUpload}
               />
-            ) : result ? (
+            ) : view === "about" ? (
+              <AboutYou
+                profile={current.profile}
+                initial={about?.about}
+                onBack={() => go("home")}
+                onRun={(a, fromPolicy) => {
+                  setAbout((x) => ({ about: a, fromPolicy, run: (x?.run ?? 0) + 1 }));
+                  go("agent");
+                }}
+              />
+            ) : view === "agent" && about ? (
+              <AgentRun
+                key={about.run}
+                extraction={withSourcesOnly(current.extraction)}
+                policyText={current.redactedText}
+                about={about.about}
+                fromPolicy={about.fromPolicy}
+                demo={demo}
+                onBack={() => go("about")}
+                onExplore={() => go("dashboard")}
+              />
+            ) : view === "chat" ? (
+              <ChatView
+                extraction={current.extraction}
+                redactedText={current.redactedText}
+                demo={demo}
+                cachedAnswers={answers}
+                checkupLimitInr={checkup?.capInr ?? null}
+                onMaxCheckup={startAgent}
+                onDashboard={() => go("dashboard")}
+              />
+            ) : view === "dashboard" || view === "agent" ? (
               <Dashboard
-                extraction={result.extraction}
-                redactedText={result.redactedText}
-                redactions={result.redactions}
-                firstName={result.firstName}
-                pending={!!result.pending}
-                partBFailed={!!result.partBFailed}
+                extraction={current.extraction}
+                redactedText={current.redactedText}
+                redactions={current.redactions}
+                firstName={current.firstName}
+                pending={!!current.pending}
+                partBFailed={!!current.partBFailed}
                 onUploadPolicy={uploadAnother}
                 demo={demo}
-                cachedAnswers={cachedAnswers}
+                cachedAnswers={answers}
                 revealed={fresh}
+                onMaxCheckup={startAgent}
               />
             ) : (
               <UploadPanel demo={demo} onDone={show} onUpdate={applyUpdate} initialError={uploadError} initialFile={carriedFile} />

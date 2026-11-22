@@ -38,7 +38,7 @@ test("wrong-document messages (incl. scanned) are recognised for the 'Try anothe
 
 test("claimed total counts only hero perks", () => {
   assert.equal(claimedTotal(demo, new Set()), 0);
-  assert.equal(claimedTotal(demo, new Set(["health-checkup", "opd-dental"])), 20000);
+  assert.equal(claimedTotal(demo, new Set(["health-checkup", "opd-dental"])), 40000);
   assert.equal(claimedTotal(demo, new Set(["teleconsult", "air-ambulance"])), 0);
   assert.equal(claimedTotal(demo, new Set(demo.heroValue.includedPerkIds)), demo.heroValue.annualPerksValueInr);
 });

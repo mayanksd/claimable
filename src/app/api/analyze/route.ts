@@ -1,7 +1,9 @@
 import { generateText, type ModelMessage } from "ai";
 import type { z } from "zod";
 import { model } from "@/lib/ai";
+import { stripInjection } from "@/lib/agent/rules";
 import { redact } from "@/lib/redact";
+import { readProfile } from "@/lib/profile";
 import { PartASchema, PartBSchema, mergeParts, type PartA, type PartB } from "@/lib/modelSchema";
 import { fixPreExisting } from "@/lib/preExisting";
 import { parseWith } from "@/lib/parseExtraction";
@@ -85,7 +87,10 @@ export async function POST(req: Request) {
     yield { type: "read", pages: pdf.pages, screens: screens.length };
 
     // 2. Mask personal data. Only the redacted text ever reaches the model.
-    const redacted = await timing.time("redact", async () => redact(pdf.text));
+    // Age + gender for the check-up agent come from the UNMASKED text, before redaction; only the result
+    // (age, band, gender) goes to the browser. The DOB itself is masked and never reaches the model.
+    const profile = readProfile(pdf.text, new Date());
+    const redacted = await timing.time("redact", async () => redact(stripInjection(pdf.text)));
     yield { type: "masked", count: redacted.count, kinds: redacted.kinds };
 
     // 3. Extraction: two parallel calls. A = Perks tab, B = the other tabs + document checks.
@@ -110,6 +115,7 @@ export async function POST(req: Request) {
         redactedText: redacted.text,
         redactions: { count: redacted.count, kinds: redacted.kinds },
         firstName: redacted.firstName,
+        profile,
         ...extra,
       };
     };

@@ -51,7 +51,13 @@ const RULES: Rule[] = [
     re: /\b[A-Z][a-z]+ [A-Z][a-z]+(?= \((?:Mother|Father|Spouse|Wife|Husband|Son|Daughter)\))/g,
     mask: "[NOMINEE]",
   },
-  { kind: "Date of birth", re: /\b\d{2}\/\d{2}\/(19|20)\d{2}\b(?=\s+\d{2}\s+Self)/g, mask: "[DOB]" },
+  // A member row: "DD/MM/YYYY <age> [gender] <relationship>" (policy dates aren't followed by an age + relationship).
+  {
+    kind: "Date of birth",
+    re: /\b\d{2}[/-]\d{2}[/-](?:19|20)\d{2}\b(?=[ \t]+\d{1,3}[ \t]+(?:(?:Male|Female|M|F|Other|Transgender)[ \t]+)?(?:Self|Spouse|Wife|Husband|Son|Daughter|Father|Mother)\b)/g,
+    mask: "[DOB]",
+  },
+  { kind: "Date of birth", re: /(\b(?:Date of Birth|DOB|D\.O\.B\.?))[ \t]*[:\-]?[ \t]*\d{2}[/-]\d{2}[/-](?:19|20)\d{2}\b/g, labelled: true, mask: "[DOB]" },
 ];
 
 export type Redacted = {
