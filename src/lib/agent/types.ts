@@ -37,4 +37,12 @@ export type Coverage = "covered" | "prescription" | "ask";
 export type PricedProvider = Provider & { priceSource: "live" | "listed" | "typical"; liveUrl?: string };
 export type CheckedProvider = PricedProvider & { coverage: Coverage; coverageWhy: string };
 
-export type Plan = { items: CheckedProvider[]; totalInr: number; limitInr: number; score: number; duplicateTags: string[] };
+export type Plan = {
+  items: CheckedProvider[];
+  totalInr: number;
+  limitInr: number;
+  score: number;
+  duplicateTags: string[];
+  /** The focus areas whose pick the plan was built around. */
+  focusUsed?: FocusId[];
+};

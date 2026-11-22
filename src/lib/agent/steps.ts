@@ -3,7 +3,7 @@ import { PROVIDERS, PRICES_AS_OF, type Provider } from "../../data/providers.ts"
 import { AGE_BANDS } from "../profile.ts";
 import type { Extraction } from "../schema.ts";
 import { readCheckupRules, type Evidence } from "./rules.ts";
-import { TAG_LABEL, checkCoverage, fitPlan, shortlist, tagWeights, type AgeGroupTest } from "./plan.ts";
+import { FOCUS_PICKS, TAG_LABEL, checkCoverage, fitPlan, shortlist, tagWeights, type AgeGroupTest } from "./plan.ts";
 import { applyLivePrices, type LivePrice } from "./prices.ts";
 import { claimChecklist } from "./pack.ts";
 import { FOCUS, type About, type CheckedProvider, type CheckupRules, type Plan } from "./types.ts";
@@ -87,6 +87,7 @@ export function stepShortlist(about: About) {
     .map(([t]) => TAG_LABEL[t] ?? t);
   const candidates = [...s.heroes, ...s.supporting, ...s.tests, ...s.genetic];
   const later = s.ageGroup.filter((a) => a.status === "later");
+  const pickIds = new Set(about.focus.flatMap((f) => FOCUS_PICKS[f]?.ids ?? []));
   const result: StepResult = {
     summary: [
       "1 premium screening",
@@ -97,10 +98,17 @@ export function stepShortlist(about: About) {
       .filter(Boolean)
       .join(" + "),
     why: [
+      ...focusPickLines(about),
       `Commonly included for your age group and focus: ${list(top)}.`,
-      `Premium screenings, best match first: ${s.heroes.map(providerLabel).join(" · ")}.`,
+      `Premium screenings compared: ${[...s.heroes]
+        .sort((a, b) => Number(pickIds.has(b.id)) - Number(pickIds.has(a.id)))
+        .map(providerLabel)
+        .join(" · ")}.`,
       `Supporting packages: ${s.supporting.map(providerLabel).join(" · ")}.`,
-      ...(s.tests.length ? [`Commonly included for your age group: ${s.tests.map((t) => t.product).join(" · ")}.`] : []),
+      ...(s.tests.length - s.markers.length > 0
+        ? [`Commonly included for your age group: ${s.tests.filter((t) => !s.markers.includes(t)).map((t) => t.product).join(" · ")}.`]
+        : []),
+      ...(s.markers.length ? [`Markers for your focus: ${s.markers.map((t) => t.product).join(" · ")}.`] : []),
       ...later.map((a) => `${a.test.product}: ${a.test.ageNote ?? "for an older age group"} — not added for your age group.`),
       "Supp[Rx] isn't planned: availability in Bengaluru isn't confirmed (it's under “More labs to compare”).",
       ...(s.genetic.length ? [`DNA option: ${s.genetic.map(providerLabel).join(" · ")} — checked separately.`] : []),
@@ -108,6 +116,12 @@ export function stepShortlist(about: About) {
     ],
   };
   return { shortlist: s, candidates, ageGroup: s.ageGroup as AgeGroupTest[], result };
+}
+
+/** One line per focus: why its pick was chosen. */
+function focusPickLines(about: About): string[] {
+  const lines = about.focus.flatMap((f) => (FOCUS_PICKS[f] ? [`Why this pick: ${FOCUS_PICKS[f]!.why}`] : []));
+  return lines.length ? lines : ["No focus with a dedicated pick, so packages are compared for broad, everyday coverage."];
 }
 
 /** Which packages to look up live (max 3): the top premium screenings, then the top supporting one. */
@@ -148,8 +162,22 @@ export function stepFit(checked: CheckedProvider[], rules: CheckupRules, about: 
   const plan = fitPlan(checked, rules.limitInr, about);
   const pool = checked.filter((p) => p.coverage === "covered" && p.category !== "genetic");
   const tooDear = pool.filter((p) => p.priceInr > rules.limitInr);
+  const focusLabel = (f: string) => FOCUS.find((x) => x.id === f)!.label;
+  const picked = about.focus.filter((f) => FOCUS_PICKS[f]);
+  const used = plan.focusUsed ?? [];
+  const skipped = picked.filter((f) => !used.includes(f));
   const why = [
-    `Tried every combination of the ${pool.length} covered packages: at most one premium screening, never over ${inr(rules.limitInr)}.`,
+    used.length
+      ? `Built around the pick for ${list(used.map(focusLabel))}, then filled with what adds new tests.`
+      : picked.length
+        ? "The focus picks aren't covered or don't fit your limit, so every combination was compared instead."
+        : "",
+    ...skipped.map((f) =>
+      used.length
+        ? `${focusLabel(f)}'s pick didn't fit alongside within ${inr(rules.limitInr)}, so its markers were added where they fit.`
+        : "",
+    ),
+    `Tried every combination of the ${pool.length} covered packages and tests: at most one premium screening, never over ${inr(rules.limitInr)}.`,
     "A test two packages both include is only counted once, so you don't pay twice for the same thing.",
     ...plan.items.map((p) => `Picked ${providerLabel(p)} — ${inr(p.priceInr)}.`),
     ...(plan.duplicateTags.length ? [`Small overlap kept: ${list(plan.duplicateTags.map((t) => TAG_LABEL[t] ?? t))} — the rest is new.`] : []),

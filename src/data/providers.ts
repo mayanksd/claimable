@@ -26,6 +26,8 @@ export type Provider = {
   minAge?: number;
   /** e.g. "commonly from 40" — shown when the person is younger than minAge. */
   ageNote?: string;
+  /** Focus markers: added only when one of these focus areas is chosen. */
+  forFocus?: ("heart" | "sugar" | "hormones" | "longevity" | "gut" | "genetic")[];
   tags: string[];
 };
 
@@ -162,7 +164,7 @@ export const AGE_GROUP_TESTS: Provider[] = [
     priceKind: "typical",
     forBody: "female",
     minAge: 18,
-    tags: ["womens", "hormones", "iron", "thyroid", "vitamins"],
+    tags: ["womens", "female-hormones", "iron", "thyroid", "vitamins"],
   },
   {
     id: "mens-panel",
@@ -178,7 +180,7 @@ export const AGE_GROUP_TESTS: Provider[] = [
     priceKind: "typical",
     forBody: "male",
     minAge: 18,
-    tags: ["mens", "hormones", "heart-blood", "metabolic", "liver-kidney"],
+    tags: ["mens", "testosterone", "heart-blood", "metabolic", "liver-kidney"],
   },
   {
     id: "pap-smear",
@@ -247,6 +249,32 @@ export const AGE_GROUP_TESTS: Provider[] = [
     ageNote: "commonly from 45",
     tags: ["colon"],
   },
+];
+
+const marker = (id: string, product: string, covers: string, priceInr: number, tags: string[], forFocus: Provider["forFocus"]): Provider => ({
+  id,
+  name: "Any accredited lab",
+  product,
+  covers,
+  priceInr,
+  location: "Home collection or any accredited lab",
+  bookingUrl: ANY_LAB,
+  category: "test",
+  asOf: PRICES_AS_OF,
+  cityConfirmed: true,
+  priceKind: "typical",
+  forFocus,
+  tags,
+});
+
+/** Single blood markers commonly added for a focus area (typical walk-in prices). Not medical advice. */
+export const FOCUS_MARKERS: Provider[] = [
+  marker("heart-markers", "Heart markers: hs-CRP + Lipoprotein(a)", "Inflammation and an inherited cholesterol particle", 1800, ["inflammation", "lpa"], ["heart"]),
+  marker("insulin-panel", "Diabetes panel: HbA1c + fasting insulin", "Long-term sugar and insulin resistance (HOMA-IR)", 1200, ["insulin"], ["sugar"]),
+  marker("thyroid-antibodies", "Thyroid antibodies (anti-TPO)", "Autoimmune thyroid markers", 1000, ["thyroid-ab"], ["hormones"]),
+  marker("celiac-screen", "Celiac screen (tTG-IgA)", "Gluten-related gut marker", 1500, ["celiac"], ["gut"]),
+  marker("iron-studies", "Iron studies", "Iron, ferritin and TIBC", 900, ["iron"], ["gut"]),
+  marker("apob-homocysteine", "ApoB + homocysteine", "Cholesterol particle count and a vascular marker", 1600, ["apob", "homocysteine"], ["longevity"]),
 ];
 
 /** Providers in the bank that aren't confirmed for Bengaluru: only listed under "More labs to compare". */
