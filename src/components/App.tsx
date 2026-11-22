@@ -16,7 +16,7 @@ import { DEFAULT_SAMPLE, SAMPLES, type SampleId } from "@/lib/samples";
 import { isCheckupPerk } from "@/lib/perks";
 import type { About } from "@/lib/agent/types";
 import { AgentHome } from "@/components/agent/AgentHome";
-import { AboutYou, BackLink } from "@/components/agent/AboutYou";
+import { AboutYou } from "@/components/agent/AboutYou";
 import { AgentRun } from "@/components/agent/AgentRun";
 
 type Screen = "home" | "upload" | "about" | "agent" | "dashboard";
@@ -126,6 +126,14 @@ export function App() {
     startOver("upload");
   }
 
+  /** "⬆️ Use my own policy": a fresh upload screen. The loaded policy stays until a new one is analysed. */
+  function openUpload() {
+    setAttempt((n) => n + 1);
+    setUploadError(null);
+    setCarriedFile(null);
+    go("upload");
+  }
+
   /** Drops the uploaded policy: back to the sample on the home screen (or straight to upload). */
   function startOver(to: Screen = "home") {
     setAttempt((n) => n + 1);
@@ -156,8 +164,9 @@ export function App() {
     <MotionConfig reducedMotion="user">
       <Nav
         sample={!!current.sample}
-        onHome={view === "home" ? undefined : () => go("home")}
-        onStartOver={result && !result.sample ? () => startOver() : undefined}
+        active={view === "home" ? "home" : view === "upload" ? "upload" : null}
+        onHome={() => go("home")}
+        onUpload={openUpload}
       />
       <AnimatePresence mode="wait" initial={false}>
         {view !== "loading" && (
@@ -181,7 +190,7 @@ export function App() {
                 onMax={startAgent}
                 onDashboard={() => go("dashboard")}
                 onChat={() => go("dashboard", { chat: true })}
-                onOwnPolicy={() => startOver("upload")}
+                onOwnPolicy={openUpload}
               />
             ) : view === "about" ? (
               <AboutYou
@@ -220,12 +229,7 @@ export function App() {
                 focusChat={focusChat}
               />
             ) : (
-              <>
-                <div className="mx-auto w-full max-w-[640px] px-4 pt-4">
-                  <BackLink onClick={() => go("home")} />
-                </div>
-                <UploadPanel demo={demo} onDone={show} onUpdate={applyUpdate} initialError={uploadError} initialFile={carriedFile} />
-              </>
+              <UploadPanel demo={demo} onDone={show} onUpdate={applyUpdate} initialError={uploadError} initialFile={carriedFile} />
             )}
           </motion.div>
         )}
