@@ -55,6 +55,15 @@ Visual target: `design/mock.html` (open it in a browser; match its layout, spaci
 - Motion (framer-motion, `MotionConfig reducedMotion="user"`): fade/slide upload → progress → dashboard; progress steps tick in one by one; hero count-up 1.2 s + one confetti burst (canvas-confetti) only for a freshly produced result; perk cards stagger in (50 ms); buttons lift on hover; tab underline slides.
 - Look: fonts via @fontsource (Bricolage Grotesque headings, Plus Jakarta Sans body; no next/font/google). Indigo base + warm coral accent (`warm` tokens) for wins/CTAs; `hero` button variant is the one primary action per screen (grey when disabled); soft background blobs; rounded-2xl cards with `shadow-soft`. Copy is casual and warm.
 
+## Agent mode: "Max my free health check-up" (branch agent/checkup-planner)
+- Home (`AgentHome`): hero card "🧬 Max my free ₹X check-up →" (limit from the check-up perk), "📊 See my full policy dashboard", "💬 Talk to my policy" (dashboard with the chat focused), "Use my own policy". The fictional sample policy is loaded by default (`SAMPLE` in `App.tsx`); the dashboard check-up card's "Max my ₹X →" also opens the agent.
+- About you (`AboutYou`): age + body pre-filled from `result.profile` (`readProfile()` reads DOB/gender from the raw text BEFORE masking; only age/band/gender reach the browser, never the DOB; nothing about the person is sent to the model). Focus: up to 2 of `FOCUS`.
+- Run (`AgentRun`): 7 visible steps from `src/lib/agent/steps.ts`, each with ✓, time taken and an expandable "Why?". Everything is code except step 4:
+  1 `readCheckupRules()` (limit, frequency, claim route — cashless only if the policy says so —, claim deadline, imaging, genetic rule, cited quotes) · 2 profile/focus · 3 `shortlist()` (1 hero + supporting, weights by focus/age) · 4 `/api/prices` (Anthropic web search, max 3 lookups, 20 s timeout; only package names are sent; results kept only from the provider's own domain within 0.5–1.5× of listed, else "listed 22 Nov 2026") · 5 `checkCoverage()` (Covered / Covered only with prescription / Ask your insurer) · 6 `fitPlan()` brute-force optimiser (≤ limit, ≤ 1 hero, duplicate tests penalised) · 7 claim checklist + `.ics` reminder (30 days before the policy-year reset).
+- Knowledge bank: `src/data/providers.ts` (`PROVIDERS`, `MORE_LABS`, `PRICES_AS_OF`).
+- Guardrails: `stripInjection()` drops lines addressed to an AI before code or model reads the policy (analyze + chat); prompts say policy text is data; chat redirects off-topic questions; no medical advice.
+- Sample PDF: `python3 scripts/make-sample-pdf.py` (then copy to `public/demo/`, regenerate `demo/redacted-policy.json`).
+
 ## Rules
 - Never send unredacted text to the model.
 - Never say "permanently excluded" unless the text states it for that item. A condition listed as pre-existing (even in an ambiguous schedule table) is a waiting period, never "not covered" — enforced in the prompts and by `fixPreExisting()` (`src/lib/preExisting.ts`) on part B.

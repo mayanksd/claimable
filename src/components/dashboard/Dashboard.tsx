@@ -36,11 +36,14 @@ type Props = {
   /** Family / lifestyle / watch-out data still loading (part B). */
   pending?: boolean;
   partBFailed?: boolean;
+  /** "Max my ₹X →" on the check-up card opens the check-up agent (else the inline planner). */
+  onMaxCheckup?: () => void;
+  focusChat?: boolean;
 };
 
 const EMPLOYER_TIP = "Tip: check your employer's group policy — they often cover maternity from day one.";
 
-export function Dashboard({ extraction, redactedText, firstName, demo, cachedAnswers, revealed, pending, partBFailed, onUploadPolicy }: Props) {
+export function Dashboard({ extraction, redactedText, firstName, demo, cachedAnswers, revealed, pending, partBFailed, onUploadPolicy, onMaxCheckup, focusChat }: Props) {
   // Hero total is recomputed in code (also for saved results from older builds).
   const e = useMemo(() => withComputedHero(withSourcesOnly(extraction)), [extraction]);
   const [tab, setTab] = useState("perks");
@@ -122,6 +125,7 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
                 onToggleClaimed={toggle}
                 checkupResetNote={resetNote}
                 sumInsuredInr={e.policy.sumInsuredInr}
+                onMaxCheckup={onMaxCheckup}
                 title={mode === "wording" ? "Perks this plan can include" : undefined}
               />
               {/* The ₹ meter needs your own limits; skip it for wording-only uploads. */}
@@ -159,7 +163,7 @@ export function Dashboard({ extraction, redactedText, firstName, demo, cachedAns
         </div>
       </main>
       <aside className="min-w-0">
-        <ChatPanel extraction={e} redactedText={redactedText} demo={demo} cached={cachedAnswers} />
+        <ChatPanel extraction={e} redactedText={redactedText} demo={demo} cached={cachedAnswers} focusOnMount={focusChat} />
       </aside>
       <ChatFab />
     </div>

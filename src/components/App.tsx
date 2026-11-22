@@ -11,7 +11,24 @@ import { Dashboard } from "@/components/dashboard/Dashboard";
 import { UploadPanel } from "@/components/upload/UploadPanel";
 import type { AnalysisResult, AnalyzeEvent } from "@/lib/analysis";
 import { ExtractionSchema } from "@/lib/schema";
-import { cachedAnswers } from "@/lib/demo";
+import { cachedAnswers, demoExtraction, demoFirstName, demoProfile, demoRedactedText, demoRedactions } from "@/lib/demo";
+import { isCheckupPerk } from "@/lib/perks";
+import type { About } from "@/lib/agent/types";
+import { AgentHome } from "@/components/agent/AgentHome";
+import { AboutYou, BackLink } from "@/components/agent/AboutYou";
+import { AgentRun } from "@/components/agent/AgentRun";
+
+/** The fictional sample policy, loaded by default so a stranger can try everything with zero setup. */
+const SAMPLE: AnalysisResult = {
+  extraction: demoExtraction,
+  redactedText: demoRedactedText,
+  redactions: demoRedactions,
+  firstName: demoFirstName,
+  profile: demoProfile,
+  sample: true,
+};
+
+type Screen = "home" | "upload" | "about" | "agent" | "dashboard";
 
 const KEY = "claimable:last-result";
 
@@ -32,6 +49,16 @@ export function App() {
   const [ready, setReady] = useState(false);
   const [demo, setDemo] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [screen, setScreenRaw] = useState<Screen>("home");
+  const [focusChat, setFocusChat] = useState(false);
+  const [about, setAbout] = useState<{ about: About; fromPolicy: boolean; run: number } | null>(null);
+  const go = (s: Screen, opts: { chat?: boolean } = {}) => {
+    setFocusChat(!!opts.chat);
+    setScreenRaw(s);
+    window.scrollTo(0, 0);
+  };
+  // No upload yet: the sample policy powers the home screen, agent, dashboard and chat.
+  const current = result ?? SAMPLE;
   // Confetti only for a result that was just produced, not one restored after a reload.
   const [fresh, setFresh] = useState(false);
 
@@ -47,7 +74,8 @@ export function App() {
     setRevealDone(false);
     setResult(r);
     setFresh(true);
-    window.scrollTo(0, 0);
+    setAbout(null);
+    go("dashboard");
     try {
       localStorage.setItem(KEY, JSON.stringify(r));
     } catch {
@@ -68,6 +96,7 @@ export function App() {
       setResult(null);
       setFresh(false);
       setUploadError(u.notHealth);
+      setScreenRaw("upload");
       try {
         localStorage.removeItem(KEY);
       } catch {}
@@ -89,15 +118,17 @@ export function App() {
   const [carriedFile, setCarriedFile] = useState<File | null>(null);
   function uploadAnother(file: File) {
     setCarriedFile(file);
-    startOver();
+    startOver("upload");
   }
 
-  function startOver() {
+  /** Drops the uploaded policy: back to the sample on the home screen (or straight to upload). */
+  function startOver(to: Screen = "home") {
     setAttempt((n) => n + 1);
     setUploadError(null);
     setResult(null);
     setFresh(false);
-    window.scrollTo(0, 0);
+    setAbout(null);
+    go(to);
     try {
       localStorage.removeItem(KEY);
     } catch {}
@@ -109,43 +140,84 @@ export function App() {
   const finishReveal = useCallback(() => setRevealDone(true), []);
   // Nothing to celebrate (₹0, e.g. not really a health policy) → no reveal, no confetti.
   // Wording-only uploads and ₹0 totals get no reveal and no confetti (heroMode "wording" / "count").
-  const revealTotal = result ? computeHeroValue(withSourcesOnly(result.extraction)).annualPerksValueInr : 0;
+  const revealTotal = computeHeroValue(withSourcesOnly(current.extraction)).annualPerksValueInr;
   const revealing =
-    !!result && fresh && !revealDone && !reduceMotion && heroMode(withSourcesOnly(result.extraction)) === "value";
-  const view = !ready ? "loading" : result ? (revealing ? "reveal" : "dashboard") : "upload";
+    screen === "dashboard" && fresh && !revealDone && !reduceMotion && heroMode(withSourcesOnly(current.extraction)) === "value";
+  const view = !ready ? "loading" : revealing ? "reveal" : screen;
+  const checkup = withSourcesOnly(current.extraction).perks.find(isCheckupPerk) ?? null;
+  const startAgent = () => go("about");
 
   return (
     <MotionConfig reducedMotion="user">
-      <Nav sample={!!result?.sample} onStartOver={result ? startOver : undefined} />
+      <Nav
+        sample={!!current.sample}
+        onHome={view === "home" ? undefined : () => go("home")}
+        onStartOver={result && !result.sample ? () => startOver() : undefined}
+      />
       <AnimatePresence mode="wait" initial={false}>
         {view !== "loading" && (
           <motion.div
-            key={view === "upload" ? `upload-${attempt}` : view}
+            key={view === "upload" ? `upload-${attempt}` : view === "agent" ? `agent-${about?.run ?? 0}` : view}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: view === "reveal" ? 0.3 : 0.35, ease: "easeOut" }}
           >
-            {result && view === "reveal" ? (
-              <RevealCard
-                total={revealTotal}
-                onDone={finishReveal}
+            {view === "reveal" ? (
+              <RevealCard total={revealTotal} onDone={finishReveal} />
+            ) : view === "home" ? (
+              <AgentHome
+                limitInr={checkup?.capInr ?? null}
+                reimbursement={checkup?.claimMode !== "cashless"}
+                sample={!!current.sample}
+                onMax={startAgent}
+                onDashboard={() => go("dashboard")}
+                onChat={() => go("dashboard", { chat: true })}
+                onOwnPolicy={() => startOver("upload")}
               />
-            ) : result ? (
+            ) : view === "about" ? (
+              <AboutYou
+                profile={current.profile}
+                initial={about?.about}
+                onBack={() => go("home")}
+                onRun={(a, fromPolicy) => {
+                  setAbout((x) => ({ about: a, fromPolicy, run: (x?.run ?? 0) + 1 }));
+                  go("agent");
+                }}
+              />
+            ) : view === "agent" && about ? (
+              <AgentRun
+                key={about.run}
+                extraction={withSourcesOnly(current.extraction)}
+                policyText={current.redactedText}
+                about={about.about}
+                fromPolicy={about.fromPolicy}
+                demo={demo}
+                onBack={() => go("about")}
+                onExplore={() => go("dashboard")}
+              />
+            ) : view === "dashboard" || view === "agent" ? (
               <Dashboard
-                extraction={result.extraction}
-                redactedText={result.redactedText}
-                redactions={result.redactions}
-                firstName={result.firstName}
-                pending={!!result.pending}
-                partBFailed={!!result.partBFailed}
+                extraction={current.extraction}
+                redactedText={current.redactedText}
+                redactions={current.redactions}
+                firstName={current.firstName}
+                pending={!!current.pending}
+                partBFailed={!!current.partBFailed}
                 onUploadPolicy={uploadAnother}
                 demo={demo}
                 cachedAnswers={cachedAnswers}
                 revealed={fresh}
+                onMaxCheckup={startAgent}
+                focusChat={focusChat}
               />
             ) : (
-              <UploadPanel demo={demo} onDone={show} onUpdate={applyUpdate} initialError={uploadError} initialFile={carriedFile} />
+              <>
+                <div className="mx-auto w-full max-w-[640px] px-4 pt-4">
+                  <BackLink onClick={() => go("home")} />
+                </div>
+                <UploadPanel demo={demo} onDone={show} onUpdate={applyUpdate} initialError={uploadError} initialFile={carriedFile} />
+              </>
             )}
           </motion.div>
         )}

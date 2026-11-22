@@ -1,0 +1,36 @@
+import type { Provider } from "../../data/providers.ts";
+import type { AgeBand, Gender } from "../profile.ts";
+
+export type FocusId = "heart" | "sugar" | "hormones" | "longevity" | "gut" | "genetic";
+
+export const FOCUS: { id: FocusId; emoji: string; label: string }[] = [
+  { id: "heart", emoji: "❤️", label: "Heart" },
+  { id: "sugar", emoji: "🍬", label: "Sugar & metabolism" },
+  { id: "hormones", emoji: "⚡", label: "Hormones & thyroid" },
+  { id: "longevity", emoji: "⏳", label: "Longevity" },
+  { id: "gut", emoji: "🦠", label: "Gut & vitamins" },
+  { id: "genetic", emoji: "🧬", label: "Genetic risk (DNA)" },
+];
+
+export type About = { ageBand: AgeBand | null; gender: Gender; focus: FocusId[] };
+
+export type CheckupRules = {
+  found: boolean;
+  limitInr: number;
+  limitNote: string;
+  frequency: string;
+  /** Only "cashless" if the policy text itself says cashless for the check-up. */
+  claimRoute: "reimbursement" | "cashless" | "ask";
+  claimWithinDays: number | null;
+  imagingAllowed: boolean | null;
+  geneticRule: "prescription" | "covered" | "excluded" | "silent";
+  accreditedLab: boolean;
+  sourcePage: number | null;
+};
+
+export type Coverage = "covered" | "prescription" | "ask";
+
+export type PricedProvider = Provider & { priceSource: "live" | "listed"; liveUrl?: string };
+export type CheckedProvider = PricedProvider & { coverage: Coverage; coverageWhy: string };
+
+export type Plan = { items: CheckedProvider[]; totalInr: number; limitInr: number; score: number; duplicateTags: string[] };

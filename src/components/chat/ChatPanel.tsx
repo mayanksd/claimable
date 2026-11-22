@@ -21,9 +21,11 @@ type Props = {
   redactedText: string;
   demo: boolean;
   cached: Record<string, string>;
+  /** Opened via "Talk to my policy": bring the chat into view and put the cursor in the box. */
+  focusOnMount?: boolean;
 };
 
-export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
+export function ChatPanel({ extraction, redactedText, demo, cached, focusOnMount }: Props) {
   const ctx = useRef({ extraction, redactedText });
   ctx.current = { extraction, redactedText };
   const transport = useMemo(() => createChatTransport({ demo, cached, context: () => ctx.current }), [demo, cached]);
@@ -32,6 +34,15 @@ export function ChatPanel({ extraction, redactedText, demo, cached }: Props) {
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const busy = status === "submitted" || status === "streaming";
+
+  useEffect(() => {
+    if (!focusOnMount) return;
+    const t = setTimeout(() => {
+      document.getElementById("chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      inputRef.current?.focus({ preventScroll: true });
+    }, 450);
+    return () => clearTimeout(t);
+  }, [focusOnMount]);
 
   const list = useRef<HTMLDivElement>(null);
   useEffect(() => {
