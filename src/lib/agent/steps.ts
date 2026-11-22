@@ -37,7 +37,23 @@ export function stepRead(e: Extraction, policyText: string): { rules: CheckupRul
   const route = { reimbursement: "pay at the lab, claim it back", cashless: "cashless (as your policy says)", ask: "claim route not stated" }[r.claimRoute];
   const summary = r.found
     ? `${inr(r.limitInr)} · ${r.frequency.toLowerCase()} · ${route}`
-    : "No check-up limit found in your policy";
+    : r.hasBenefit
+      ? "Your policy mentions a health check-up but no ₹ limit to plan with"
+      : "Your policy doesn't include a free health check-up";
+  if (!r.found)
+    return {
+      rules: r,
+      result: {
+        summary,
+        why: [
+          ...r.evidence.map((ev) => `${ev.label}: “${ev.quote}”${pageRef(ev)}`),
+          r.hasBenefit
+            ? "Without a ₹ limit we can't fit a plan to it — ask your insurer what the check-up covers."
+            : "We looked for a preventive or annual health check-up in the benefits and found none.",
+          "Your other perks are still on the dashboard.",
+        ],
+      },
+    };
   const why = [
     ...r.evidence.map((ev) => `${ev.label}: “${ev.quote}”${pageRef(ev)}`),
     r.imagingAllowed === true ? "Scans and advanced screening count towards the limit." : r.imagingAllowed === false ? "Scans are excluded from the check-up." : "Your policy doesn't say whether scans count.",

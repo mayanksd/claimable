@@ -153,7 +153,7 @@ export function PlanOutput({ data, extraction, onExplore }: { data: PackData; ex
 
       <p className="text-center text-sm text-muted-foreground">Prices change — confirm on the provider&apos;s site. Ask your doctor which tests suit you.</p>
 
-      <Button variant="hero" size="lg" className="h-14 justify-self-center rounded-2xl px-8 text-lg" onClick={onExplore}>
+      <Button variant="hero" size="lg" className="h-auto min-h-14 w-full justify-self-center rounded-2xl px-6 text-lg whitespace-normal sm:w-auto sm:px-8" onClick={onExplore}>
         Explore all your perks <ArrowRight className="size-5" />
       </Button>
     </div>

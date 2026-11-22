@@ -1,7 +1,7 @@
 // Step 1 "Read your policy": the check-up rules, read in CODE from the extraction + redacted text.
 // The model never decides the limit here, and text that looks like instructions to an AI is skipped.
 import type { Extraction } from "../schema.ts";
-import { isCheckupPerk } from "../perks.ts";
+import { HEALTH_CHECKUP_RE, isCheckupPerk } from "../perks.ts";
 import type { CheckupRules } from "./types.ts";
 
 export type Evidence = { label: string; quote: string; page: number | null };
@@ -110,6 +110,7 @@ export function readCheckupRules(e: Extraction, policyText: string): CheckupRule
 
   return {
     found: limitInr > 0,
+    hasBenefit: limitInr > 0 || e.perks.some((p) => HEALTH_CHECKUP_RE.test(p.name)) || checkupLines.length > 0,
     limitInr,
     limitNote: perk?.capLabel ?? "",
     frequency,

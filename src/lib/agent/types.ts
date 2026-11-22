@@ -16,7 +16,10 @@ export const FOCUS: { id: FocusId; emoji: string; label: string }[] = [
 export type About = { ageBand: AgeBand | null; age?: number | null; gender: Gender; focus: FocusId[] };
 
 export type CheckupRules = {
+  /** A usable ₹ limit was found. */
   found: boolean;
+  /** The policy mentions a health check-up at all (it may still have no ₹ limit). */
+  hasBenefit: boolean;
   limitInr: number;
   limitNote: string;
   frequency: string;

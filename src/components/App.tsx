@@ -80,7 +80,8 @@ export function App() {
     setResult(r);
     setFresh(true);
     setAbout(null);
-    go("dashboard");
+    // Straight into the check-up agent, pre-filled from this policy (the dashboard is one tap away).
+    go("about");
     try {
       localStorage.setItem(KEY, JSON.stringify(r));
     } catch {

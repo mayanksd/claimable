@@ -20,10 +20,11 @@ import {
 } from "@/lib/agent/steps";
 import type { LivePrice } from "@/lib/agent/prices";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { BackLink } from "./AboutYou";
 import { PlanOutput, type PackData } from "./PlanOutput";
 
-type StepState = { status: "todo" | "run" | "done"; ms?: number; result?: StepResult };
+type StepState = { status: "todo" | "run" | "done" | "skipped"; ms?: number; result?: StepResult };
 
 type Props = {
   extraction: Extraction;
@@ -34,6 +35,9 @@ type Props = {
   onBack: () => void;
   onExplore: () => void;
 };
+
+/** Thrown after step 1 when there's nothing to plan: the remaining steps are skipped. */
+class NoCheckup extends Error {}
 
 const PRICE_TIMEOUT_MS = 22_000;
 
@@ -62,6 +66,7 @@ export function AgentRun({ extraction, policyText, about, fromPolicy, demo, onBa
     () => Object.fromEntries(STEPS.map((s) => [s.id, { status: "todo" }])) as Record<StepId, StepState>,
   );
   const [pack, setPack] = useState<PackData | null>(null);
+  const [noCheckup, setNoCheckup] = useState<string | null>(null);
   const started = useRef(false);
 
   useEffect(() => {
@@ -83,6 +88,16 @@ export function AgentRun({ extraction, policyText, about, fromPolicy, demo, onBa
         const r = stepRead(extraction, policyText);
         return { value: r.rules, result: r.result };
       });
+      if (!rules.found) {
+        // Honest stop: nothing to fit a plan to.
+        setSteps((s) => Object.fromEntries(Object.entries(s).map(([k, v]) => [k, k === "read" ? v : { status: "skipped" }])) as Record<StepId, StepState>);
+        setNoCheckup(
+          rules.hasBenefit
+            ? "Your policy mentions a health check-up, but it doesn't state a ₹ limit, so there's nothing to fit a plan to. Ask your insurer what it covers."
+            : "Your policy doesn't include a free health check-up, so there's no plan to build.",
+        );
+        throw new NoCheckup();
+      }
       await step("you", () => ({ value: null, result: stepYou(about, fromPolicy) }));
       const sl = await step("shortlist", () => {
         const s = stepShortlist(about);
@@ -124,7 +139,7 @@ export function AgentRun({ extraction, policyText, about, fromPolicy, demo, onBa
     };
   }, [extraction, policyText, about, fromPolicy, demo, reduce]);
 
-  const doneCount = STEPS.filter((s) => steps[s.id].status === "done").length;
+  const doneCount = STEPS.filter((s) => steps[s.id].status === "done" || steps[s.id].status === "skipped").length;
   return (
     <div className="mx-auto w-full max-w-[720px] px-4 pt-8 pb-16">
       <BackLink onClick={onBack} label="Change my answers" />
@@ -132,11 +147,11 @@ export function AgentRun({ extraction, policyText, about, fromPolicy, demo, onBa
         <div>
           <p className="text-sm font-semibold text-brand">🧬 Max my free check-up</p>
           <h1 className="text-[28px] leading-tight font-extrabold tracking-tight sm:text-[34px]">
-            {pack ? "Your check-up plan is ready 🎉" : "Building your plan…"}
+            {pack ? "Your check-up plan is ready 🎉" : noCheckup ? "No check-up to plan" : "Building your plan…"}
           </h1>
         </div>
         <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-muted-foreground ring-1 ring-border" aria-live="polite">
-          {doneCount} of {STEPS.length} steps
+          {noCheckup ? "Stopped after step 1" : `${doneCount} of ${STEPS.length} steps`}
         </span>
       </div>
 
@@ -145,6 +160,16 @@ export function AgentRun({ extraction, policyText, about, fromPolicy, demo, onBa
           <StepRow key={s.id} n={i + 1} emoji={s.emoji} title={s.id === "fit" && pack ? `Fit the best plan to ${inrPlain(pack.rules.limitInr)}` : s.title} working={s.working} state={steps[s.id]} />
         ))}
       </ol>
+
+      {noCheckup && (
+        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-6 rounded-3xl border border-warn-line bg-warn-soft p-5 text-center sm:p-6">
+          <p className="text-lg font-semibold">{noCheckup}</p>
+          <p className="mt-1 text-sm text-muted-foreground">Your other perks are still waiting.</p>
+          <Button variant="hero" size="lg" className="mt-4 h-auto min-h-14 w-full rounded-2xl px-6 text-lg whitespace-normal sm:w-auto sm:px-8" onClick={onExplore}>
+            📊 See my full policy dashboard
+          </Button>
+        </motion.section>
+      )}
 
       <AnimatePresence>
         {pack && (
@@ -167,7 +192,7 @@ function StepRow({ n, emoji, title, working, state }: { n: number; emoji: string
     <motion.li
       layout="position"
       initial={false}
-      animate={{ opacity: state.status === "todo" ? 0.5 : 1 }}
+      animate={{ opacity: state.status === "todo" || state.status === "skipped" ? 0.5 : 1 }}
       className={cn(
         "rounded-2xl border bg-white px-4 py-3 shadow-sm transition-colors",
         state.status === "run" && "border-brand-line ring-2 ring-brand/15",
@@ -196,11 +221,12 @@ function StepRow({ n, emoji, title, working, state }: { n: number; emoji: string
           <div className="flex flex-wrap items-baseline justify-between gap-x-3">
             <h3 className="text-base font-bold">
               <span aria-hidden>{emoji}</span> {title}
-              <span className="sr-only">{done ? " — done" : state.status === "run" ? " — working" : " — waiting"}</span>
+              <span className="sr-only">{done ? " — done" : state.status === "run" ? " — working" : state.status === "skipped" ? " — skipped" : " — waiting"}</span>
             </h3>
             {done && state.ms !== undefined && <span className="text-xs font-semibold text-muted-foreground tabular-nums">✓ {secs(state.ms)}</span>}
           </div>
           {state.status === "run" && <p className="mt-0.5 text-sm text-muted-foreground">{working}</p>}
+          {state.status === "skipped" && <p className="mt-0.5 text-sm text-muted-foreground">Skipped — no check-up limit to plan with.</p>}
           {done && state.result && (
             <>
               <p className="mt-0.5 text-sm font-semibold text-good-ink">{state.result.summary}</p>
